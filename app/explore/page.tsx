@@ -414,25 +414,27 @@ REQUIREMENTS:
             <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
               <button
                 type="button"
-                className={`btn-toggle-pill ${activeLabTab === 'synthesis' ? 'active' : ''}`}
-                onClick={() => setActiveLabTab('synthesis')}
-              >
-                ✦ Synthesis Monograph
-              </button>
-              <button
-                type="button"
                 className={`btn-toggle-pill ${activeLabTab === 'tuvi' ? 'active' : ''}`}
                 onClick={() => setActiveLabTab('tuvi')}
               >
-                ☯ Tử Vi 12 Palaces Matrix
+                ☯ {locale === 'vi' ? 'Lá Số 12 Cung Tử Vi' : 'Tử Vi 12 Palaces Matrix'}
               </button>
               <button
                 type="button"
                 className={`btn-toggle-pill ${activeLabTab === 'astro' ? 'active' : ''}`}
                 onClick={() => setActiveLabTab('astro')}
               >
-                🪐 Astrodienst Planetary Wheel
+                🪐 {locale === 'vi' ? 'Bản Đồ Sao Tây Phương' : 'Astrodienst Planetary Wheel'}
               </button>
+              {Object.values(traditions).filter(Boolean).length >= 2 && (
+                <button
+                  type="button"
+                  className={`btn-toggle-pill ${activeLabTab === 'synthesis' ? 'active' : ''}`}
+                  onClick={() => setActiveLabTab('synthesis')}
+                >
+                  ✦ {locale === 'vi' ? 'Chuyên Khảo Đối Sánh Đông–Tây' : 'East–West Synthesis Monograph'}
+                </button>
+              )}
             </div>
 
             {/* TAB 1: Synthesis */}
@@ -463,7 +465,7 @@ REQUIREMENTS:
                           </div>
                         </div>
                         <p style={{ fontSize: '0.875rem', color: 'var(--moon-ivory)', lineHeight: 1.6, borderTop: '1px solid var(--border-subtle)', paddingTop: '0.85rem' }}>
-                          <strong style={{ color: 'var(--celestial-gold)' }}>Unified Verdict:</strong> {item.synthesis || item.content}
+                          <strong style={{ color: 'var(--celestial-gold)' }}>{locale === 'vi' ? 'Nhận Định Hợp Nhất:' : 'Unified Verdict:'}</strong> {item.synthesis || item.content}
                         </p>
                       </div>
                     );

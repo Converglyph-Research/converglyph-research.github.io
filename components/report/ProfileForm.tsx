@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { BirthProfile } from '@/lib/types';
+import { checkProfileDbApi } from '@/lib/api';
 import {
   isValidGregorianDate,
   isValidCoordinates,
@@ -9,7 +10,6 @@ import {
   reverseGeocodeCoords,
   GeoLocationResult
 } from '@/lib/validation';
-
 interface ProfileFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -40,7 +40,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   const [geoNotice, setGeoNotice] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
-
+  const [overwriteConfirmModal, setOverwriteConfirmModal] = React.useState<{ show: boolean; message: string; pendingProfile: BirthProfile } | null>(null);
   const searchDebounceRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const loadDemoEinstein = () => {
@@ -166,21 +166,55 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
       return;
     }
 
+    const profileData: BirthProfile = {
+      name: name.trim() || (isVietnamese ? 'Hồ Sơ Cá Nhân' : 'Subject Profile'),
+      year: y,
+      month: m,
+      day: d,
+      hour: h,
+      minute: min,
+      isTimeUnknown,
+      latitude: lat,
+      longitude: lon,
+      locationName: locationName.trim() || (isVietnamese ? 'Tọa độ xác định' : 'Specified Coordinates'),
+      useLmt
+    };
+
+    // Check database for existing profile before execution
+    const dbCheck = await checkProfileDbApi(profileData.name, y, m, d);
+    if (dbCheck.exists) {
+      setOverwriteConfirmModal({
+        show: true,
+        message: dbCheck.message || (isVietnamese
+          ? `Hồ sơ "${profileData.name}" (${y}-${m}-${d}) đã tồn tại trong cơ sở dữ liệu. Bạn có muốn ghi đè (overwrite) lần chạy này không?`
+          : `Profile "${profileData.name}" already exists in the database. Do you wish to overwrite this run?`),
+        pendingProfile: profileData
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      await onSubmitProfile({
-        name: name.trim() || (isVietnamese ? 'Hồ Sơ Cá Nhân' : 'Subject Profile'),
-        year: y,
-        month: m,
-        day: d,
-        hour: h,
-        minute: min,
-        isTimeUnknown,
-        latitude: lat,
-        longitude: lon,
-        locationName: locationName.trim() || (isVietnamese ? 'Tọa độ xác định' : 'Specified Coordinates'),
-        useLmt
-      });
+      await onSubmitProfile(profileData);
+      onClose();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Calculation error';
+      setErrorMsg(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const executeConfirmedOverwrite = async (proceed: boolean) => {
+    if (!overwriteConfirmModal) return;
+    const p = overwriteConfirmModal.pendingProfile;
+    setOverwriteConfirmModal(null);
+
+    if (!proceed) return;
+
+    setLoading(true);
+    try {
+      await onSubmitProfile(p);
       onClose();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Calculation error';
@@ -470,6 +504,64 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
           </button>
         </form>
       </dialog>
+
+      {/* Database Overwrite Confirmation Dialog */}
+      {overwriteConfirmModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(10, 8, 16, 0.82)',
+            backdropFilter: 'blur(10px)',
+            zIndex: 10001,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+        >
+          <div style={{
+            background: '#1F1A2D',
+            border: '1px solid var(--celestial-gold)',
+            borderRadius: '16px',
+            padding: '2rem',
+            maxWidth: '460px',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.85)',
+            color: 'var(--moon-ivory)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+              <span style={{ fontSize: '1.5rem' }}>⚠️</span>
+              <h4 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', color: 'var(--moon-ivory)' }}>
+                {isVietnamese ? 'Xác Nhận Ghi Đè Hồ Sơ' : 'Confirm Overwrite Run'}
+              </h4>
+            </div>
+            <p style={{ fontSize: '0.875rem', color: '#cbd5e1', lineHeight: '1.6', marginBottom: '1.5rem' }}>
+              {overwriteConfirmModal.message}
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.85rem' }}>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => executeConfirmedOverwrite(false)}
+                style={{ fontSize: '0.85rem', padding: '0.55rem 1.1rem' }}
+              >
+                {isVietnamese ? 'Hủy Bỏ' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => executeConfirmedOverwrite(true)}
+                style={{ fontSize: '0.85rem', padding: '0.55rem 1.1rem' }}
+              >
+                {isVietnamese ? 'Ghi Đè & Tính Tiếp' : 'Overwrite & Run'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

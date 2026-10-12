@@ -4,6 +4,22 @@ All component updates, bug fixes, and design system refinements are tracked belo
 
 ---
 
+### [2026-10-12 17:27:15 UTC] [FEAT] Database pre-check & overwrite confirmation dialog, isolated single-canon labs, and localized synthesis labels
+
+- **Context & Problem:**
+  Added database pre-check (/api/profile/check) before calculating. If a profile already exists, a confirmation modal prompts whether to overwrite or cancel. Updated laboratory tabs so standalone methods (Tu Vi 12 Palaces, Western Planetary Wheel) are directly accessible, while the East-West Synthesis Monograph is only presented when >= 2 traditions are active. Localized Unified Verdict to 'Nhận Định Hợp Nhất' for Vietnamese users.
+- **Files Modified:**
+  - `components/report/ProfileForm.tsx`
+  - `app/explore/page.tsx`
+  - `lib/api.ts`
+  - `server.py`
+- **Verification Evidence:**
+  npm run build passed generating all 15 static HTML routes without error. Curl confirmed /api/profile/check returns valid existence states.
+- **Engineering Insights & Risk Mitigation:**
+  Checking database duplicates before execution prevents accidental erasure of customized chart notes and provides explicit user confirmation.
+
+---
+
 ### [2026-10-12 17:10:29 UTC] [DOCS] Created frontend ARCHITECTURAL_MEMORY.md for UI/UX contracts and time-series rules
 
 - **Context & Problem:**

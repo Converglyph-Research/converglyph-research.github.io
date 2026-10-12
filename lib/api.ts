@@ -8,7 +8,7 @@ const PROD_API_GATEWAY = "https://meeting-tue-transform-cole.trycloudflare.com";
 const API_BASE = (typeof window !== 'undefined')
   ? (window.location.hostname.includes('github.io') ? PROD_API_GATEWAY : '')
   : 'http://127.0.0.1:8089';
-export async function calculateProfileApi(profile: BirthProfile): Promise<unknown> {
+export async function calculateProfileApi(profile: BirthProfile, allowOverwrite: boolean = false): Promise<unknown> {
   const resp = await fetch(`${API_BASE}/api/calculate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -24,14 +24,22 @@ export async function calculateProfileApi(profile: BirthProfile): Promise<unknow
       use_lmt: profile.useLmt,
       latitude: profile.latitude,
       longitude: profile.longitude,
+      allow_overwrite: allowOverwrite
     }),
   });
-
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
     throw new Error(err.error || `HTTP ${resp.status}`);
   }
   return resp.json();
+}
+
+export async function checkProfileDbApi(name: string, year: number, month: number, day: number): Promise<{ exists: boolean; message?: string }> {
+  try {
+    const resp = await fetch(`${API_BASE}/api/profile/check?name=${encodeURIComponent(name)}&year=${year}&month=${month}&day=${day}`);
+    if (resp.ok) return resp.json();
+  } catch {}
+  return { exists: false };
 }
 
 export async function fetchCompareApi(profile: BirthProfile, lang: 'en' | 'vi'): Promise<unknown> {
