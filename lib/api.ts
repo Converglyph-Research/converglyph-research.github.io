@@ -34,12 +34,33 @@ export async function calculateProfileApi(profile: BirthProfile, allowOverwrite:
   return resp.json();
 }
 
-export async function checkProfileDbApi(name: string, year: number, month: number, day: number): Promise<{ exists: boolean; message?: string }> {
+export async function checkProfileDbApi(name: string, year: number, month: number, day: number): Promise<{ exists: boolean; profile_id?: number; calculated_at?: string; message?: string }> {
   try {
     const resp = await fetch(`${API_BASE}/api/profile/check?name=${encodeURIComponent(name)}&year=${year}&month=${month}&day=${day}`);
     if (resp.ok) return resp.json();
   } catch {}
   return { exists: false };
+}
+
+export async function fetchSavedProfilesApi(): Promise<Array<{ id: number; name: string; birth_year: number; birth_month: number; birth_day: number; location_name: string; calculated_at: string }>> {
+  try {
+    const resp = await fetch(`${API_BASE}/api/profiles`);
+    if (resp.ok) {
+      const data = await resp.json();
+      return data.profiles || [];
+    }
+  } catch {}
+  return [];
+}
+
+export async function loadSavedProfileApi(id: number | string): Promise<{ profile: BirthProfile; rawData: any } | null> {
+  try {
+    const resp = await fetch(`${API_BASE}/api/profile/load/${id}`);
+    if (resp.ok) {
+      return resp.json();
+    }
+  } catch {}
+  return null;
 }
 
 export async function fetchCompareApi(profile: BirthProfile, lang: 'en' | 'vi'): Promise<unknown> {

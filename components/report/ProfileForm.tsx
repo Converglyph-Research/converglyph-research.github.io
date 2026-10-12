@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { BirthProfile } from '@/lib/types';
-import { checkProfileDbApi } from '@/lib/api';
+import type { BirthProfile } from '@/lib/types';
+import { checkProfileDbApi, loadSavedProfileApi } from '@/lib/api';
 import {
   isValidGregorianDate,
   isValidCoordinates,
@@ -14,6 +14,7 @@ interface ProfileFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmitProfile: (p: BirthProfile) => Promise<void>;
+  onLoadSavedProfile?: (p: BirthProfile, rawData: any) => void;
   isVietnamese: boolean;
 }
 
@@ -21,6 +22,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   isOpen,
   onClose,
   onSubmitProfile,
+  onLoadSavedProfile,
   isVietnamese
 }) => {
   const [name, setName] = React.useState('');
@@ -40,7 +42,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   const [geoNotice, setGeoNotice] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
-  const [overwriteConfirmModal, setOverwriteConfirmModal] = React.useState<{ show: boolean; message: string; pendingProfile: BirthProfile } | null>(null);
+  const [overwriteConfirmModal, setOverwriteConfirmModal] = React.useState<{ show: boolean; message: string; pendingProfile: BirthProfile; profileId?: number } | null>(null);
   const searchDebounceRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const loadDemoEinstein = () => {
@@ -186,9 +188,10 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
       setOverwriteConfirmModal({
         show: true,
         message: dbCheck.message || (isVietnamese
-          ? `Hồ sơ "${profileData.name}" (${y}-${m}-${d}) đã tồn tại trong cơ sở dữ liệu. Bạn có muốn ghi đè (overwrite) lần chạy này không?`
-          : `Profile "${profileData.name}" already exists in the database. Do you wish to overwrite this run?`),
-        pendingProfile: profileData
+          ? `Hồ sơ "${profileData.name}" (${y}-${m}-${d}) đã tồn tại trong cơ sở dữ liệu. Bạn có muốn tải lại kết quả đã lưu hay ghi đè lần chạy này?`
+          : `Profile "${profileData.name}" already exists in the database. Would you like to load the saved run or overwrite it?`),
+        pendingProfile: profileData,
+        profileId: dbCheck.profile_id
       });
       return;
     }
@@ -219,6 +222,29 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Calculation error';
       setErrorMsg(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLoadExistingSaved = async () => {
+    if (!overwriteConfirmModal || !overwriteConfirmModal.profileId) return;
+    const pId = overwriteConfirmModal.profileId;
+    const p = overwriteConfirmModal.pendingProfile;
+    setOverwriteConfirmModal(null);
+    setLoading(true);
+    try {
+      const saved = await loadSavedProfileApi(pId);
+      if (saved && onLoadSavedProfile) {
+        onLoadSavedProfile(saved.profile, saved.rawData);
+        onClose();
+      } else {
+        await onSubmitProfile(p);
+        onClose();
+      }
+    } catch {
+      await onSubmitProfile(p);
+      onClose();
     } finally {
       setLoading(false);
     }
@@ -541,7 +567,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
             <p style={{ fontSize: '0.875rem', color: '#cbd5e1', lineHeight: '1.6', marginBottom: '1.5rem' }}>
               {overwriteConfirmModal.message}
             </p>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.85rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.85rem', flexWrap: 'wrap' }}>
               <button
                 type="button"
                 className="btn btn-outline"
@@ -550,6 +576,16 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
               >
                 {isVietnamese ? 'Hủy Bỏ' : 'Cancel'}
               </button>
+              {overwriteConfirmModal.profileId && (
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={handleLoadExistingSaved}
+                  style={{ fontSize: '0.85rem', padding: '0.55rem 1.1rem', color: 'var(--celestial-gold)', borderColor: 'var(--celestial-gold)' }}
+                >
+                  {isVietnamese ? '📥 Tải Lại Kết Quả Đã Lưu' : '📥 Load Saved Run'}
+                </button>
+              )}
               <button
                 type="button"
                 className="btn btn-primary"

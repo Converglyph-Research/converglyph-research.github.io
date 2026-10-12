@@ -4,6 +4,22 @@ All component updates, bug fixes, and design system refinements are tracked belo
 
 ---
 
+### [2026-10-12 17:42:26 UTC] [FEAT] Database profile persistence, load saved runs from dropdown or duplicate dialog, and overwrite protection
+
+- **Context & Problem:**
+  Added database persistence for calculations into subject_profiles in SQLite. When a user enters parameters for an already calculated profile, the duplicate dialog offers 'Load Saved Run' (loading the existing run without recalculating) or 'Overwrite & Run'. Implemented GET /api/profiles and GET /api/profile/load/:id on backend, and added 'Saved Database Runs' optgroup to the specimen dropdown on /explore.
+- **Files Modified:**
+  - `server.py`
+  - `lib/api.ts`
+  - `components/report/ProfileForm.tsx`
+  - `app/explore/page.tsx`
+- **Verification Evidence:**
+  npx tsc --noEmit passed cleanly with zero type errors. Verified /api/profiles and /api/profile/load endpoints.
+- **Engineering Insights & Risk Mitigation:**
+  Caching completed runs in the database and exposing them through both duplicate prompts and specimen selectors eliminates unnecessary compute while keeping historical runs accessible.
+
+---
+
 ### [2026-10-12 17:30:50 UTC] [REFACTOR] Collapsible technical calculations, single-tradition view mode, and localized monograph headings
 
 - **Context & Problem:**

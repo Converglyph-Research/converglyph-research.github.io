@@ -11,7 +11,7 @@ import { TimeSeriesConvergenceView } from '@/components/report/TimeSeriesConverg
 import { AiReasoningStudio } from '@/components/report/AiReasoningStudio';
 import { BENCHMARK_PROFILES, deriveDomainScores } from '@/lib/profile';
 import { BirthProfile, LifeMapResult } from '@/lib/types';
-import { calculateProfileApi, fetchCompareApi } from '@/lib/api';
+import { calculateProfileApi, fetchCompareApi, fetchSavedProfilesApi, loadSavedProfileApi } from '@/lib/api';
 import { streamAiReasoning } from '@/lib/ai';
 import { useLocale } from '@/lib/LocaleContext';
 
@@ -26,6 +26,7 @@ export default function ExplorePage() {
   const [synthesisData, setSynthesisData] = React.useState<any>(null);
   const [activeLabTab, setActiveLabTab] = React.useState<'tuvi' | 'astro' | 'synthesis'>('tuvi');
   const [showTechnicalDetails, setShowTechnicalDetails] = React.useState(false);
+  const [savedDbProfiles, setSavedDbProfiles] = React.useState<Array<{ id: number; name: string; birth_year: number; birth_month: number; birth_day: number; location_name: string }>>([]);
   // AI Thinking State (Groq LPU reasoning from tu-vi)
   const [aiThinkingText, setAiThinkingText] = React.useState<string>('');
   const [isAiLoading, setIsAiLoading] = React.useState(false);
@@ -98,6 +99,10 @@ export default function ExplorePage() {
   }, []);
 
   React.useEffect(() => {
+    fetchSavedProfilesApi().then(setSavedDbProfiles).catch(console.warn);
+  }, []);
+
+  React.useEffect(() => {
     // Load compare synthesis data whenever active profile or locale changes
     fetchCompareApi(profileResult.profile, locale)
       .then(setSynthesisData)
@@ -108,11 +113,74 @@ export default function ExplorePage() {
     setTraditions(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleSelectProfile = (key: string) => {
+  const handleSelectProfile = async (key: string) => {
     setSelectedKey(key);
+    setAiThinkingText('');
+
     if (BENCHMARK_PROFILES[key]) {
       setProfileResult(BENCHMARK_PROFILES[key]);
-      setAiThinkingText('');
+      return;
+    }
+
+    if (key.startsWith('db-')) {
+      const profId = key.replace('db-', '');
+      try {
+        const saved = await loadSavedProfileApi(profId);
+        if (saved) {
+          const derived = deriveDomainScores(saved.rawData);
+          setProfileResult({
+            profile: saved.profile,
+            domain_scores: derived,
+            theme_details: [
+              {
+                theme: "Intellect & First Principles",
+                icon: "🧠",
+                synthesis: `Computed cognitive synthesis for ${saved.profile.name}.`,
+                western_driver: `Mercury in ${saved.rawData?.western?.planets?.find((p: any) => p.name === 'Mercury')?.sign || 'Aries'}`,
+                eastern_driver: `Day Master: ${saved.rawData?.bazi?.day_master?.name || 'Yang Fire'}`
+              },
+              {
+                theme: "Vocation & Autonomy",
+                icon: "🏛️",
+                synthesis: `Vocational trajectory governed by ${saved.rawData?.western?.midheaven?.sign || 'Pisces'} Midheaven.`,
+                western_driver: `Midheaven at ${saved.rawData?.western?.midheaven?.degree || 12}°`,
+                eastern_driver: `Career Palace in ${saved.rawData?.tuvi?.palaces?.find((p: any) => p.name?.includes('Career'))?.branch_vi || 'Ngọ'}`
+              },
+              {
+                theme: "Material Resources",
+                icon: "💎",
+                synthesis: "Financial orientation shows deliberate resource pacing and capital mobilization.",
+                western_driver: "2nd/8th houses division",
+                eastern_driver: "Wealth Palace configuration"
+              },
+              {
+                theme: "Personal Well-being",
+                icon: "🌱",
+                synthesis: "Personal stamina and somatic pacing anchored in Five Element distribution.",
+                western_driver: `Sun in ${saved.rawData?.western?.planets?.find((p: any) => p.name === 'Sun')?.sign || 'Pisces'}`,
+                eastern_driver: `Wood ${saved.rawData?.bazi?.elements_distribution?.Wood || 20}%, Fire ${saved.rawData?.bazi?.elements_distribution?.Fire || 20}%`
+              },
+              {
+                theme: "Partnership & Covenant",
+                icon: "🤝",
+                synthesis: "Relational contracts across 7th House & Spouse Palace.",
+                western_driver: `Venus in ${saved.rawData?.western?.planets?.find((p: any) => p.name === 'Venus')?.sign || 'Aries'}`,
+                eastern_driver: "Spouse Palace branch placement"
+              },
+              {
+                theme: "Inner Transformation",
+                icon: "🔮",
+                synthesis: `Philosophical resilience reflected in Life Path ${saved.rawData?.numerology?.life_path_reduced?.number || 6}.`,
+                western_driver: `Saturn in ${saved.rawData?.western?.planets?.find((p: any) => p.name === 'Saturn')?.sign || 'Aries'}`,
+                eastern_driver: "Ancestral Mind Palace in Wood"
+              }
+            ],
+            calculationVersion: `DB-${profId}`
+          });
+        }
+      } catch (e) {
+        console.warn('Failed to load profile from db:', e);
+      }
     }
   };
 
@@ -633,6 +701,59 @@ REQUIREMENTS:
         isOpen={isCalcOpen}
         onClose={() => setIsCalcOpen(false)}
         onSubmitProfile={handleCalculate}
+        onLoadSavedProfile={(p, rawData) => {
+          const derived = deriveDomainScores(rawData);
+          setProfileResult({
+            profile: p,
+            domain_scores: derived,
+            theme_details: [
+              {
+                theme: "Intellect & First Principles",
+                icon: "🧠",
+                synthesis: `Computed cognitive synthesis for ${p.name}.`,
+                western_driver: `Mercury in ${rawData?.western?.planets?.find((item: any) => item.name === 'Mercury')?.sign || 'Aries'}`,
+                eastern_driver: `Day Master: ${rawData?.bazi?.day_master?.name || 'Yang Fire'}`
+              },
+              {
+                theme: "Vocation & Autonomy",
+                icon: "🏛️",
+                synthesis: `Vocational trajectory governed by ${rawData?.western?.midheaven?.sign || 'Pisces'} Midheaven.`,
+                western_driver: `Midheaven at ${rawData?.western?.midheaven?.degree || 12}°`,
+                eastern_driver: `Career Palace in ${rawData?.tuvi?.palaces?.find((item: any) => item.name?.includes('Career'))?.branch_vi || 'Ngọ'}`
+              },
+              {
+                theme: "Material Resources",
+                icon: "💎",
+                synthesis: "Financial orientation shows deliberate resource pacing and capital mobilization.",
+                western_driver: "2nd/8th houses division",
+                eastern_driver: "Wealth Palace configuration"
+              },
+              {
+                theme: "Personal Well-being",
+                icon: "🌱",
+                synthesis: "Personal stamina and somatic pacing anchored in Five Element distribution.",
+                western_driver: `Sun in ${rawData?.western?.planets?.find((item: any) => item.name === 'Sun')?.sign || 'Pisces'}`,
+                eastern_driver: `Wood ${rawData?.bazi?.elements_distribution?.Wood || 20}%, Fire ${rawData?.bazi?.elements_distribution?.Fire || 20}%`
+              },
+              {
+                theme: "Partnership & Covenant",
+                icon: "🤝",
+                synthesis: "Relational contracts across 7th House & Spouse Palace.",
+                western_driver: `Venus in ${rawData?.western?.planets?.find((item: any) => item.name === 'Venus')?.sign || 'Aries'}`,
+                eastern_driver: "Spouse Palace branch placement"
+              },
+              {
+                theme: "Inner Transformation",
+                icon: "🔮",
+                synthesis: `Philosophical resilience reflected in Life Path ${rawData?.numerology?.life_path_reduced?.number || 6}.`,
+                western_driver: `Saturn in ${rawData?.western?.planets?.find((item: any) => item.name === 'Saturn')?.sign || 'Aries'}`,
+                eastern_driver: "Ancestral Mind Palace in Wood"
+              }
+            ],
+            calculationVersion: "DB-Loaded"
+          });
+          setSelectedKey('custom');
+        }}
         isVietnamese={locale === 'vi'}
       />
     </>
