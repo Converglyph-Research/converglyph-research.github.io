@@ -27,8 +27,6 @@ export default function ResearchPage() {
       <Navbar
         currentLocale={locale}
         onLocaleChange={setLocale}
-        activeView="research"
-        onViewChange={(v) => { if (v === 'consumer') window.location.href = '/'; }}
         onOpenCalc={() => { window.location.href = '/explore'; }}
       />
 
