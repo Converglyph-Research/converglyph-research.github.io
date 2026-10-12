@@ -7,6 +7,7 @@ import { PrototypeNotice } from '@/components/layout/PrototypeNotice';
 import { RadarChart } from '@/components/report/RadarChart';
 import { ThemeCards } from '@/components/report/ThemeCards';
 import { ProfileForm } from '@/components/report/ProfileForm';
+import { AiReasoningStudio } from '@/components/report/AiReasoningStudio';
 import { BENCHMARK_PROFILES, deriveDomainScores } from '@/lib/profile';
 import { BirthProfile, LifeMapResult } from '@/lib/types';
 import { calculateProfileApi, fetchCompareApi } from '@/lib/api';
@@ -173,16 +174,51 @@ export default function ExplorePage() {
     setAiThinkingText('');
   };
 
-  // Run AI Thinking CoT synthesis (Groq LPU LLM inference)
-  const handleRunAiThinking = async () => {
+  // Run AI Thinking CoT synthesis across specific aspects or unified convergence
+  const handleRunAiThinking = async (mode: 'all' | 'tuvi' | 'astro' | 'bazi' | 'convergence' = 'all') => {
     setIsAiLoading(true);
     setAiThinkingText('');
 
-    const sysPrompt = locale === 'vi'
-      ? "Bạn là Chuyên gia Cao cấp về Tử Vi Đẩu Số và Chiêm Tinh Học Tây Phương. Nhiệm vụ của bạn là luận giải hợp nhất sâu sắc giữa 12 Cung Tử Vi và Bản Đồ Sao Astrodienst, nêu rõ điểm tương đồng, điểm mâu thuẫn và kim chỉ nam hành động dựa trên dữ liệu tính toán chính xác."
-      : "You are a Senior Metaphysical and Astrological Reasoning Intelligence. Your objective is to cross-examine Eastern Zi Wei Dou Shu and Western Astrodienst natal charts, highlighting points of consensus, structural tension, and actionable guidance without mystical vagueness.";
+    const name = profileResult.profile.name;
+    const dateStr = `${profileResult.profile.year}-${String(profileResult.profile.month).padStart(2, '0')}-${String(profileResult.profile.day).padStart(2, '0')}`;
+    const loc = profileResult.profile.locationName;
 
-    const userPrompt = `Subject: ${profileResult.profile.name}, Birth Date: ${profileResult.profile.year}-${profileResult.profile.month}-${profileResult.profile.day}, Location: ${profileResult.profile.locationName}. Please provide a structured Chain-of-Thought (CoT) cross-tradition synthesis covering: 1. Core Identity & Ego, 2. Career & Authority, 3. Synthesis Actionable Counsel.`;
+    let sysPrompt = '';
+    let userPrompt = '';
+
+    if (mode === 'tuvi') {
+      sysPrompt = locale === 'vi'
+        ? "Bạn là Đại Sư Tử Vi Đẩu Số tinh thông cổ kim (kết hợp Tử Vi Toàn Thư, Trung Châu phái và lý thuyết Tinh Bàn Tử Vân). Phân tích chi tiết 12 cung, các chính tinh miếu hãm, bộ sao đắc địa, Tứ Hóa và đại hạn 10 năm với định dạng Markdown chuyên nghiệp (bảng, tiêu đề rõ ràng)."
+        : "You are a Master of Classical Eastern Zi Wei Dou Shu (Purple Star Astrology). Deliver an authoritative, structured analysis of the 12 Palaces, star brightness levels, major luck decades, and transformations using clean Markdown headers and tables.";
+      userPrompt = `Đương số: ${name}, Sinh ngày: ${dateStr}, Nơi sinh: ${loc}. Hãy phân tích sâu sắc: 1. Cung Mệnh & Thân (Bản thể & Căn cơ), 2. Cung Quan Lộc & Tài Bạch (Sự nghiệp & Tài chính), 3. Cung Phu Thê (Hôn nhân), 4. Kim chỉ nam hành động và vận hạn.`;
+    } else if (mode === 'astro') {
+      sysPrompt = locale === 'vi'
+        ? "Bạn là Chuyên gia Chiêm Tinh Học Tây Phương (Western Astrologer) chuẩn Astrodienst và Cosmobiology. Luận giải chuyên sâu dựa trên The Big Three (Sun, Moon, Ascendant), hệ thống 12 Nhà và mạng lưới góc chiếu hình học (Aspects) chuẩn xác từ Swiss Ephemeris. Trình bày Markdown thẩm mỹ với đề mục và bảng phân tích."
+        : "You are an Astrodienst-standard Western Astrologer. Analyze the Big Three (Sun, Moon, Ascendant), Placidus house rulers, and geometric aspect networks using structured Markdown tables and headers.";
+      userPrompt = `Subject: ${name}, Birth: ${dateStr}, Location: ${loc}. Analyze: 1. Core Psychological Blueprint (Sun, Moon, Rising), 2. House Dynamics & Career Zenith (Midheaven), 3. Critical Aspect Tensions & Talents, 4. Strategic Life Advice.`;
+    } else if (mode === 'bazi') {
+      sysPrompt = locale === 'vi'
+        ? "Bạn là Chuyên gia Bát Tự Tứ Trụ (Four Pillars of Destiny). Phân tích dựa trên Nhật Chủ (Day Master), tiết khí thiên văn 24 Jie Qi, thế cân bằng Ngũ Hành (Kim, Mộc, Thủy, Hỏa, Thổ) và Thập Thần. Trình bày Markdown chuyên nghiệp."
+        : "You are a BaZi Four Pillars Master. Analyze Day Master balance, Five Element distributions, and Ten Gods dynamics using clear Markdown formatting.";
+      userPrompt = `Subject: ${name}, Birth: ${dateStr}, Location: ${loc}. Evaluate: 1. Day Master Element & Polarity, 2. Dynamic Five Elements Balance, 3. Useful God (Dụng Thần) & Flow, 4. Career and Health Counsel.`;
+    } else if (mode === 'convergence') {
+      sysPrompt = locale === 'vi'
+        ? "Bạn là Nhà Nghiên Cứu Định Lượng Đối Sánh Mệnh Lý Học Đông - Tây. Trách nhiệm của bạn là tổng hợp dữ liệu từ 4 môn phái (Chiêm Tinh Tây Phương, Tử Vi, Bát Tự, Thần Số Học) để đo lường mức độ ĐỒNG THUẬN (Convergence) và MÂU THUẪN (Divergence), nêu rõ điểm trùng khớp kỳ diệu và điểm phân kỳ học thuật dưới dạng bảng Markdown."
+        : "You are a Quantitative Cross-Tradition Synthesis Researcher. Evaluate convergence and divergence across Western Astrology, Tu Vi, BaZi, and Numerology. Surface remarkable points of consensus and explain doctrinal conflicts objectively in structured Markdown tables.";
+      userPrompt = `Đương số: ${name}, Sinh ngày: ${dateStr}, Tọa độ: ${loc}. Đối sánh: 1. Bảng Tổng Hợp Đồng Thuận (Chủ đề, Dấu ấn các môn phái, Tỷ lệ đồng thuận), 2. Bảng Phân Kỳ Học Thuật (Điểm mâu thuẫn giữa các quy tắc), 3. Kết Luận Hợp Nhất Đa Chiều.`;
+    } else {
+      // Mode === 'all': Full integration
+      sysPrompt = locale === 'vi'
+        ? "Bạn là Viện Trưởng Nghiên Cứu Biểu Tượng & Mệnh Lý Học Đa Chiều (Converglyph Research Intelligence). Hãy thực thi chuỗi suy luận Chain-of-Thought (CoT) hợp nhất toàn diện 4 hệ thống: 1. Tử Vi Đẩu Số 12 Cung, 2. Chiêm Tinh Học Tây Phương Swiss Ephemeris, 3. Bát Tự Tứ Trụ, 4. Thần Số Học Pythagore. Định dạng Markdown cao cấp với bảng phân tích đối sánh, trích dẫn quy tắc và kim chỉ nam khai phóng."
+        : "You are the Lead Symbolic Intelligence Synthesizer at Converglyph Research. Execute a comprehensive Chain-of-Thought (CoT) integration across Tu Vi, Western Astrodienst, BaZi, and Pythagorean Numerology. Structure into Markdown headers, comparison tables, and actionable philosophical counsel.";
+      userPrompt = `Subject: ${name}, Birth Date: ${dateStr}, Location: ${loc}.
+Produce a comprehensive Master Synthesis:
+### 1. Bản Thể Cốt Lõi & Động Lực Trí Tuệ (Core Ego & Cognitive Style)
+### 2. Sự Nghiệp, Danh Vọng & Quyền Lực (Vocation, Zenith & Wealth)
+### 3. Tình Duyên & Mối Quan Hệ (Partnership & Covenant)
+### 4. Ma Trận Đối Sánh Đồng Thuận vs Mâu Thuẫn (Convergence vs Divergence Matrix)
+### 5. Kim Chỉ Nam Khai Phóng Tiềm Năng (Actionable Strategic Counsel)`;
+    }
 
     await streamAiReasoning({
       model: "openai/gpt-oss-120b",
@@ -288,36 +324,17 @@ export default function ExplorePage() {
             </div>
           </div>
 
-          {/* AI Thinking Reasoning Card (Groq LPU LLM inference) */}
-          <div className="matrix-editorial-card" style={{ marginBottom: '3.5rem', padding: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-              <div>
-                <span className="status-chip confirmed">Groq LPU Reasoning</span>
-                <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', color: 'var(--moon-ivory)', marginTop: '0.4rem' }}>
-                  AI Thinking Deep Reasoning Studio
-                </h3>
-              </div>
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={isAiLoading}
-                onClick={handleRunAiThinking}
-                style={{ fontSize: '0.8rem' }}
-              >
-                {isAiLoading ? 'Generating Reasoning Stream...' : '🧠 Run AI Deep Reasoning'}
-              </button>
-            </div>
-
-            {aiThinkingText ? (
-              <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: '10px', padding: '1.5rem', fontSize: '0.9rem', color: 'var(--moon-ivory)', lineHeight: 1.7, whiteSpace: 'pre-line' }}>
-                {aiThinkingText}
-              </div>
-            ) : (
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                Tap "Run AI Deep Reasoning" to execute real-time multi-model Chain-of-Thought inference synthesizing your Western and Eastern natal positions.
-              </p>
-            )}
-          </div>
+          {/* Modern AI Reasoning Studio with Aspect Switching & Formatted Markdown */}
+          <AiReasoningStudio
+            isVietnamese={locale === 'vi'}
+            subjectName={profileResult.profile.name}
+            birthDateStr={`${profileResult.profile.year}-${String(profileResult.profile.month).padStart(2, '0')}-${String(profileResult.profile.day).padStart(2, '0')}`}
+            locationName={profileResult.profile.locationName}
+            synthesisData={synthesisData}
+            onRunReasoning={handleRunAiThinking}
+            reasoningText={aiThinkingText}
+            isLoading={isAiLoading}
+          />
 
           {/* Dedicated Deep-Dive Laboratory */}
           <div id="deep-dive-lab" style={{ marginTop: '3rem' }}>
