@@ -413,11 +413,24 @@ REQUIREMENTS:
                   onChange={(e) => handleSelectProfile(e.target.value)}
                   className="select-editorial"
                 >
-                  <option value="einstein">Albert Einstein — Theoretical Physics (1879)</option>
-                  <option value="da_vinci">Leonardo da Vinci — Polymath Synthesis (1452)</option>
-                  <option value="curie">Marie Curie — Radiology Pioneer (1867)</option>
+                  <optgroup label={locale === 'vi' ? 'Hồ sơ chuẩn kinh điển' : 'Benchmark Presets'}>
+                    <option value="einstein">Albert Einstein — Theoretical Physics (1879)</option>
+                    <option value="da_vinci">Leonardo da Vinci — Polymath Synthesis (1452)</option>
+                    <option value="curie">Marie Curie — Radiology Pioneer (1867)</option>
+                  </optgroup>
+                  {savedDbProfiles.length > 0 && (
+                    <optgroup label={locale === 'vi' ? 'Hồ sơ đã lưu trong CSDL' : 'Saved Database Runs'}>
+                      {savedDbProfiles.map(p => (
+                        <option key={`db-${p.id}`} value={`db-${p.id}`}>
+                          💾 {p.name} ({p.birth_year}-{p.birth_month}-{p.birth_day})
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
                   {selectedKey === 'custom' && (
-                    <option value="custom">★ {profileResult.profile.name} (Calculated Profile)</option>
+                    <optgroup label={locale === 'vi' ? 'Hồ sơ vừa tính' : 'Active Calculation'}>
+                      <option value="custom">★ {profileResult.profile.name} (Calculated Profile)</option>
+                    </optgroup>
                   )}
                 </select>
               </div>

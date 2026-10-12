@@ -4,6 +4,19 @@ All component updates, bug fixes, and design system refinements are tracked belo
 
 ---
 
+### [2026-10-12 17:45:58 UTC] [FIX] Render saved database runs in specimen dropdown optgroups on explore page
+
+- **Context & Problem:**
+  Rendered savedDbProfiles into <optgroup label='Hồ sơ đã lưu trong CSDL / Saved Database Runs'> inside select.select-editorial on /explore. Selecting any saved run triggers handleSelectProfile('db-:id'), fetching the complete deterministic calculations and rehydrating the life map.
+- **Files Modified:**
+  - `app/explore/page.tsx`
+- **Verification Evidence:**
+  Browser evaluation verified optgroup rendered with db-1 (💾 Marie Curie Test (1867-11-7)).
+- **Engineering Insights & Risk Mitigation:**
+  Grouping options with HTML optgroups separates static benchmark exemplars from runtime user database runs clearly.
+
+---
+
 ### [2026-10-12 17:42:26 UTC] [FEAT] Database profile persistence, load saved runs from dropdown or duplicate dialog, and overwrite protection
 
 - **Context & Problem:**
