@@ -4,6 +4,25 @@ All component updates, bug fixes, and design system refinements are tracked belo
 
 ---
 
+### [2026-10-12 18:48:43 UTC] [SECURITY] Account-scoped chart data isolation and Google OAuth exclusive authentication
+
+- **Context & Problem:**
+  Enforced that Google OAuth is the ONLY authentication pathway (removed all manual email/display name forms). Resolved cross-account chart data leakage by implementing getAccountProfileStorageKey() scoping stored charts to current user email, preventing different Google accounts on the same browser from viewing each other's Active Personal Charts. Scoped backend /api/profiles and /api/profile/check queries strictly to user_email.
+- **Files Modified:**
+  - `components/auth/GoogleAuth.tsx`
+  - `app/personal/page.tsx`
+  - `app/explore/page.tsx`
+  - `app/page.tsx`
+  - `lib/auth.ts`
+  - `lib/api.ts`
+  - `server.py`
+- **Verification Evidence:**
+  TypeScript compiled cleanly; unit tests passed (13/13). Tested /api/profiles scoping.
+- **Engineering Insights & Risk Mitigation:**
+  Scoping localStorage keys with normalized user account identifiers ensures true multi-tenant client-side data segregation without complex auth middleware.
+
+---
+
 ### [2026-10-12 18:40:03 UTC] [FEAT] System diagnostic file logging, AI reasoning auto-persistence, and deletion controls
 
 - **Context & Problem:**

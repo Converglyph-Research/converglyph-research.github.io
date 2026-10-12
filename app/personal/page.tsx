@@ -9,7 +9,7 @@ import { ProfileForm } from '@/components/report/ProfileForm';
 import { useLocale } from '@/lib/LocaleContext';
 import { BirthProfile } from '@/lib/types';
 import { calculateProfileApi } from '@/lib/api';
-import { getUserSession, UserSession } from '@/lib/auth';
+import { getUserSession, UserSession, getAccountProfileStorageKey } from '@/lib/auth';
 
 export default function PersonalSpacePage() {
   const { locale, setLocale, dict } = useLocale();
@@ -19,21 +19,27 @@ export default function PersonalSpacePage() {
   const isVi = (locale === 'vi');
 
   React.useEffect(() => {
-    setSession(getUserSession());
+    const currentSession = getUserSession();
+    setSession(currentSession);
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('converglyph_custom_profile') || localStorage.getItem('aetheria_custom_profile');
+      // Use account-isolated storage key to prevent cross-account data leakage
+      const storageKey = getAccountProfileStorageKey(currentSession?.email);
+      const saved = localStorage.getItem(storageKey);
       if (saved) {
         try {
           setCustomProfile(JSON.parse(saved));
         } catch {}
+      } else {
+        setCustomProfile(null);
       }
     }
   }, []);
-
   const handleProfileSubmit = async (p: BirthProfile) => {
-    const rawData = await calculateProfileApi(p);
+    const currentSession = getUserSession();
+    const rawData = await calculateProfileApi(p, false, currentSession?.email);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('converglyph_custom_profile', JSON.stringify({ profile: p, rawData }));
+      const storageKey = getAccountProfileStorageKey(currentSession?.email);
+      localStorage.setItem(storageKey, JSON.stringify({ profile: p, rawData }));
       setCustomProfile({ profile: p, rawData });
       setIsCalcOpen(false);
     }
@@ -41,8 +47,9 @@ export default function PersonalSpacePage() {
 
   const handleClearProfile = () => {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('converglyph_custom_profile');
-      localStorage.removeItem('aetheria_custom_profile');
+      const currentSession = getUserSession();
+      const storageKey = getAccountProfileStorageKey(currentSession?.email);
+      localStorage.removeItem(storageKey);
       setCustomProfile(null);
     }
   };

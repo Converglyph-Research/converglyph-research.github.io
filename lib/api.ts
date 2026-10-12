@@ -8,7 +8,7 @@ const PROD_API_GATEWAY = "https://meeting-tue-transform-cole.trycloudflare.com";
 const API_BASE = (typeof window !== 'undefined')
   ? (window.location.hostname.includes('github.io') ? PROD_API_GATEWAY : '')
   : 'http://127.0.0.1:8089';
-export async function calculateProfileApi(profile: BirthProfile, allowOverwrite: boolean = false): Promise<unknown> {
+export async function calculateProfileApi(profile: BirthProfile, allowOverwrite: boolean = false, userEmail?: string): Promise<unknown> {
   const resp = await fetch(`${API_BASE}/api/calculate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -24,9 +24,11 @@ export async function calculateProfileApi(profile: BirthProfile, allowOverwrite:
       use_lmt: profile.useLmt,
       latitude: profile.latitude,
       longitude: profile.longitude,
-      allow_overwrite: allowOverwrite
+      allow_overwrite: allowOverwrite,
+      user_email: userEmail || ''
     }),
   });
+
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
     throw new Error(err.error || `HTTP ${resp.status}`);
@@ -34,17 +36,19 @@ export async function calculateProfileApi(profile: BirthProfile, allowOverwrite:
   return resp.json();
 }
 
-export async function checkProfileDbApi(name: string, year: number, month: number, day: number): Promise<{ exists: boolean; profile_id?: number; calculated_at?: string; message?: string }> {
+export async function checkProfileDbApi(name: string, year: number, month: number, day: number, userEmail?: string): Promise<{ exists: boolean; profile_id?: number; calculated_at?: string; message?: string }> {
   try {
-    const resp = await fetch(`${API_BASE}/api/profile/check?name=${encodeURIComponent(name)}&year=${year}&month=${month}&day=${day}`);
+    const emailParam = userEmail ? `&email=${encodeURIComponent(userEmail)}` : '';
+    const resp = await fetch(`${API_BASE}/api/profile/check?name=${encodeURIComponent(name)}&year=${year}&month=${month}&day=${day}${emailParam}`);
     if (resp.ok) return resp.json();
   } catch {}
   return { exists: false };
 }
 
-export async function fetchSavedProfilesApi(): Promise<Array<{ id: number; name: string; birth_year: number; birth_month: number; birth_day: number; location_name: string; calculated_at: string }>> {
+export async function fetchSavedProfilesApi(userEmail?: string): Promise<Array<{ id: number; name: string; birth_year: number; birth_month: number; birth_day: number; location_name: string; calculated_at: string }>> {
   try {
-    const resp = await fetch(`${API_BASE}/api/profiles`);
+    const emailParam = userEmail ? `?email=${encodeURIComponent(userEmail)}` : '';
+    const resp = await fetch(`${API_BASE}/api/profiles${emailParam}`);
     if (resp.ok) {
       const data = await resp.json();
       return data.profiles || [];

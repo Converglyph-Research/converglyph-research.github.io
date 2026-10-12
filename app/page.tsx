@@ -9,15 +9,18 @@ import { ProfileForm } from '@/components/report/ProfileForm';
 import { useLocale } from '@/lib/LocaleContext';
 import { BirthProfile } from '@/lib/types';
 import { calculateProfileApi } from '@/lib/api';
+import { getUserSession, getAccountProfileStorageKey } from '@/lib/auth';
 
 export default function HomePage() {
   const { locale, setLocale, dict } = useLocale();
   const [isCalcOpen, setIsCalcOpen] = React.useState(false);
 
   const handleProfileSubmit = async (p: BirthProfile) => {
-    const rawData = await calculateProfileApi(p);
+    const currentSession = getUserSession();
+    const rawData = await calculateProfileApi(p, false, currentSession?.email);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('converglyph_custom_profile', JSON.stringify({ profile: p, rawData }));
+      const storageKey = getAccountProfileStorageKey(currentSession?.email);
+      localStorage.setItem(storageKey, JSON.stringify({ profile: p, rawData }));
       window.location.href = '/explore?profile=custom';
     }
   };

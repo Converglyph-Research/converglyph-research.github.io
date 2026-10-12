@@ -3,6 +3,7 @@
 import React from 'react';
 import type { BirthProfile } from '@/lib/types';
 import { checkProfileDbApi, loadSavedProfileApi } from '@/lib/api';
+import { getUserSession } from '@/lib/auth';
 import {
   isValidGregorianDate,
   isValidCoordinates,
@@ -182,8 +183,9 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
       useLmt
     };
 
-    // Check database for existing profile before execution
-    const dbCheck = await checkProfileDbApi(profileData.name, y, m, d);
+    // Check database for existing profile scoped to current user account
+    const currentSession = getUserSession();
+    const dbCheck = await checkProfileDbApi(profileData.name, y, m, d, currentSession?.email);
     if (dbCheck.exists) {
       setOverwriteConfirmModal({
         show: true,

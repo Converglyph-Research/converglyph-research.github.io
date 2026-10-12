@@ -14,6 +14,7 @@ import { BirthProfile, LifeMapResult } from '@/lib/types';
 import { calculateProfileApi, fetchCompareApi, fetchSavedProfilesApi, loadSavedProfileApi } from '@/lib/api';
 import { streamAiReasoning } from '@/lib/ai';
 import { useLocale } from '@/lib/LocaleContext';
+import { getUserSession, getAccountProfileStorageKey } from '@/lib/auth';
 
 export default function ExplorePage() {
   const { locale, setLocale, dict } = useLocale();
@@ -35,7 +36,9 @@ export default function ExplorePage() {
     // Check if custom profile was saved from home form
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
-      const savedCustom = localStorage.getItem('converglyph_custom_profile') || localStorage.getItem('aetheria_custom_profile');
+      const currentSession = getUserSession();
+      const storageKey = getAccountProfileStorageKey(currentSession?.email);
+      const savedCustom = localStorage.getItem(storageKey) || localStorage.getItem('converglyph_custom_profile') || localStorage.getItem('aetheria_custom_profile');
       if (urlParams.get('profile') === 'custom' && savedCustom) {
         try {
           const parsed = JSON.parse(savedCustom);
@@ -185,8 +188,13 @@ export default function ExplorePage() {
   };
 
   const handleCalculate = async (profile: BirthProfile) => {
-    const rawData = await calculateProfileApi(profile) as any;
+    const currentSession = getUserSession();
+    const rawData = await calculateProfileApi(profile, false, currentSession?.email) as any;
     const derivedScores = deriveDomainScores(rawData);
+    const storageKey = getAccountProfileStorageKey(currentSession?.email);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(storageKey, JSON.stringify({ profile, rawData }));
+    }
 
     const newResult: LifeMapResult = {
       profile,

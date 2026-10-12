@@ -10,11 +10,12 @@ export interface UserSession {
   sub: string;
 }
 
-const STORAGE_KEY = 'aetheria_user_session';
+const STORAGE_KEY = 'converglyph_user_session';
+const LEGACY_STORAGE_KEY = 'aetheria_user_session';
 
 export function getUserSession(): UserSession | null {
   if (typeof window === 'undefined') return null;
-  const raw = localStorage.getItem(STORAGE_KEY);
+  const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
   if (!raw) return null;
   try {
     return JSON.parse(raw);
@@ -31,6 +32,20 @@ export function saveUserSession(session: UserSession): void {
 export function clearUserSession(): void {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(LEGACY_STORAGE_KEY);
+}
+
+/**
+ * Returns the user-isolated storage key for custom calculated charts.
+ * Prevents cross-account data leakage when different Google users sign in on the same browser.
+ */
+export function getAccountProfileStorageKey(userEmail?: string): string {
+  const session = userEmail ? { email: userEmail } : getUserSession();
+  if (session && session.email) {
+    const safeEmail = session.email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    return `converglyph_chart_${safeEmail}`;
+  }
+  return 'converglyph_chart_guest';
 }
 
 /**
