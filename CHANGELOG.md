@@ -4,6 +4,22 @@ All component updates, bug fixes, and design system refinements are tracked belo
 
 ---
 
+### [2026-10-12 19:08:15 UTC] [FEAT] Stripe Checkout passes (3d, 7d, 30d, 1y), AI reasoning credit system, login requirement for Personal Chart, and enriched Life Map
+
+- **Context & Problem:**
+  Implemented complete Stripe subscription passes: 3-day (29k VND / .49), 7-day (59k VND / .99), 30-day (179k VND / .99), and 1-year (1,490,000 VND / 9.99) with proportional AI reasoning credits (25, 70, 350, 5000 credits). Added /api/subscription/create-checkout, /api/subscription/verify-session, and decrement logic on backend. Enforced Google login requirement before calculating Active Personal Chart. Enriched ThemeCards with vector variance alignment insights.
+- **Files Modified:**
+  - `server.py`
+  - `lib/api.ts`
+  - `app/personal/page.tsx`
+  - `components/report/ThemeCards.tsx`
+- **Verification Evidence:**
+  Stripe session creation tested live with sandbox secret key returning valid checkout url. TypeScript passed with 0 errors.
+- **Engineering Insights & Risk Mitigation:**
+  A credit-bounded pass model allows low-friction trial for users (3-day pass) while preventing GPU token exhaustion and bounding LLM inference costs.
+
+---
+
 ### [2026-10-12 18:48:43 UTC] [SECURITY] Account-scoped chart data isolation and Google OAuth exclusive authentication
 
 - **Context & Problem:**

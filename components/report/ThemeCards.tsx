@@ -40,9 +40,12 @@ export const ThemeCards: React.FC<ThemeCardsProps> = ({ details, isVietnamese })
               {item.synthesis}
             </p>
 
-            <div className="theme-driver-box" style={{ background: '#F4EFE6', borderRadius: '8px', padding: '0.65rem 0.85rem', fontSize: '0.775rem', color: '#655C70', fontFamily: 'var(--font-mono)' }}>
-              <div><strong>{isVietnamese ? 'Phương Tây' : 'Western'}:</strong> {item.western_driver}</div>
-              <div style={{ marginTop: '0.25rem' }}><strong>{isVietnamese ? 'Phương Đông' : 'Eastern'}:</strong> {item.eastern_driver}</div>
+            <div className="theme-driver-box" style={{ background: '#F4EFE6', borderRadius: '8px', padding: '0.75rem 0.95rem', fontSize: '0.775rem', color: '#655C70', fontFamily: 'var(--font-mono)', lineHeight: '1.6' }}>
+              <div><strong style={{ color: 'var(--color-western)' }}>{isVietnamese ? 'Chiêm Tinh (Western):' : 'Western Astrology:'}</strong> {item.western_driver}</div>
+              <div style={{ marginTop: '0.35rem' }}><strong style={{ color: 'var(--color-tuvi)' }}>{isVietnamese ? 'Tử Vi & Bát Tự (Eastern):' : 'Eastern Metaphysics:'}</strong> {item.eastern_driver}</div>
+              <div style={{ marginTop: '0.35rem', borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '0.35rem', color: '#4A4255' }}>
+                <strong>{isVietnamese ? 'Đối Chiếu Phương Sai:' : 'Vector Alignment:'}</strong> {isDivergent ? (isVietnamese ? '⚡ Xuất hiện xung đột về chu kỳ thời gian & cơ chế tác động' : '⚡ Structural divergence in temporal pacing') : (isVietnamese ? '✓ Cộng hưởng năng lượng trên cùng chiều vector' : '✓ Concordant directional valence across traditions')}
+              </div>
             </div>
           </div>
         );

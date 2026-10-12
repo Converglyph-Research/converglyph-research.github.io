@@ -98,6 +98,44 @@ export async function deleteAiHistoryApi(id: number | string): Promise<boolean> 
   return false;
 }
 
+export async function fetchSubscriptionPlansApi(): Promise<{ plans: any[]; stripe_publishable_key: string }> {
+  try {
+    const resp = await fetch(`${API_BASE}/api/subscription/plans`);
+    if (resp.ok) return resp.json();
+  } catch {}
+  return { plans: [], stripe_publishable_key: '' };
+}
+
+export async function fetchUserSubscriptionStatusApi(email: string): Promise<{ tier: string; credits_remaining: number; is_pro: boolean; plan_id?: string; expires_at?: string }> {
+  try {
+    const resp = await fetch(`${API_BASE}/api/subscription/status?email=${encodeURIComponent(email)}`);
+    if (resp.ok) return resp.json();
+  } catch {}
+  return { tier: 'free', credits_remaining: 5, is_pro: false };
+}
+
+export async function createStripeCheckoutApi(planId: string, email?: string, currency: 'usd' | 'eur' = 'usd'): Promise<{ checkout_url?: string; session_id?: string; error?: string }> {
+  const resp = await fetch(`${API_BASE}/api/subscription/create-checkout`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      plan_id: planId,
+      user_email: email || '',
+      currency
+    })
+  });
+  return resp.json();
+}
+
+export async function verifyStripeSessionApi(sessionId: string, email?: string): Promise<{ success?: boolean; tier?: string; plan?: any; error?: string }> {
+  try {
+    const resp = await fetch(`${API_BASE}/api/subscription/verify-session?session_id=${encodeURIComponent(sessionId)}&email=${encodeURIComponent(email || '')}`);
+    return resp.json();
+  } catch (e) {
+    return { error: String(e) };
+  }
+}
+
 export async function fetchCompareApi(profile: BirthProfile, lang: 'en' | 'vi'): Promise<unknown> {
   const resp = await fetch(`${API_BASE}/api/compare`, {
     method: 'POST',
