@@ -4,6 +4,18 @@ All component updates, bug fixes, and design system refinements are tracked belo
 
 ---
 
+### [2026-10-12 18:20:22 UTC] [DOCS] Exhaustive technical calculation formulas documented on /documentation with KaTeX
+
+- **Context & Problem:**
+  Documented full mathematical formulations across all calculation engines: Meeus Julian Ephemeris Day equation, Local Mean Time (LMT), Equation of Time (EoT) trigonometric series, True Solar Time (LST), BaZi Sexagenary Modulo arithmetic, Tu Vi Lunisolar conjunctions, Palace branches, Emperor Star Bureau placement, Numerology dual-reduction equations, and the Consensus Index formula C = 1 - sigma/sigma_max with Brier Loss proper scoring rules.
+- **Files Modified:**
+  - `app/documentation/page.tsx`
+  - `documents/TECHNICAL_CALCULATION_SPECIFICATIONS.md`
+- **Verification Evidence:**
+  TypeScript compiler passed with zero diagnostics. Built static export.
+
+---
+
 ### [2026-10-12 17:57:21 UTC] [FEAT] Expandable Convergence Matrix methodology card with KaTeX formula and data source breakdown
 
 - **Context & Problem:**
