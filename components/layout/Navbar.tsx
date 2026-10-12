@@ -32,7 +32,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </svg>
           </div>
           <div>
-            <div className="brand-name">Aetheria Research</div>
+            <div className="brand-name">Converglyph Research</div>
             <div className="brand-subtitle">{dict.brand_subtitle}</div>
           </div>
         </Link>
@@ -53,6 +53,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="lang-switch-group" role="group" aria-label="Language Switcher">
           <button
             type="button"
+            id="btn-lang-en"
             className={`lang-btn ${currentLocale === 'en' ? 'active' : ''}`}
             onClick={() => onLocaleChange('en')}
             title="English"
@@ -62,6 +63,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>|</span>
           <button
             type="button"
+            id="btn-lang-vi"
             className={`lang-btn ${currentLocale === 'vi' ? 'active' : ''}`}
             onClick={() => onLocaleChange('vi')}
             title="Tiếng Việt"

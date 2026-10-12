@@ -11,10 +11,10 @@ import { BENCHMARK_PROFILES, deriveDomainScores } from '@/lib/profile';
 import { BirthProfile, LifeMapResult } from '@/lib/types';
 import { calculateProfileApi, fetchCompareApi } from '@/lib/api';
 import { streamAiReasoning } from '@/lib/ai';
-import { Locale } from '@/lib/i18n';
+import { useLocale } from '@/lib/LocaleContext';
 
 export default function ExplorePage() {
-  const [locale, setLocale] = React.useState<Locale>('en');
+  const { locale, setLocale, dict } = useLocale();
   const [selectedKey, setSelectedKey] = React.useState<string>('einstein');
   const [profileResult, setProfileResult] = React.useState<LifeMapResult>(BENCHMARK_PROFILES.einstein);
   const [traditions, setTraditions] = React.useState({ w: true, b: true, t: true, n: true });
@@ -101,6 +101,7 @@ export default function ExplorePage() {
       .then(setSynthesisData)
       .catch(console.warn);
   }, [profileResult.profile, locale]);
+
   const toggleTradition = (key: 'w' | 'b' | 't' | 'n') => {
     setTraditions(prev => ({ ...prev, [key]: !prev[key] }));
   };
@@ -172,7 +173,7 @@ export default function ExplorePage() {
     setAiThinkingText('');
   };
 
-  // Run AI Thinking CoT synthesis (Groq GPT-OSS 120B / Qwen)
+  // Run AI Thinking CoT synthesis (Groq LPU LLM inference)
   const handleRunAiThinking = async () => {
     setIsAiLoading(true);
     setAiThinkingText('');
@@ -215,7 +216,7 @@ export default function ExplorePage() {
           <div className="editorial-report-wrapper" style={{ marginBottom: '3.5rem' }}>
             <div className="report-masthead">
               <div>
-                <span className="report-masthead-meta">Aetheria Specimen Report • Vol. 01</span>
+                <span className="report-masthead-meta">Converglyph Specimen Report • Vol. 01</span>
                 <h2 className="report-masthead-title" style={{ marginTop: '0.4rem' }}>{profileResult.profile.name}</h2>
               </div>
               <div className="report-masthead-meta">
@@ -318,7 +319,7 @@ export default function ExplorePage() {
             )}
           </div>
 
-          {/* Dedicated Deep-Dive Laboratory: East-West Synthesis, 12 Palaces, and Astro Wheel */}
+          {/* Dedicated Deep-Dive Laboratory */}
           <div id="deep-dive-lab" style={{ marginTop: '3rem' }}>
             <div className="section-editorial-header">
               <span className="section-editorial-eyebrow">Interactive Foundations Lab</span>

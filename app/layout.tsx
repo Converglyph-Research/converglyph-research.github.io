@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import '@/styles/globals.css';
+import { LocaleProvider } from '@/lib/LocaleContext';
 
 export const metadata: Metadata = {
-  title: 'Aetheria Research — Multi-System Symbolic Intelligence',
-  description: 'Aetheria Research translates fragmented symbolic traditions into structured, traceable claims and prospective evaluation protocols.',
+  title: 'Converglyph Research — Multi-System Symbolic Intelligence',
+  description: 'Translating fragmented symbolic traditions into structured, traceable claims and prospective evaluation protocols.',
 };
 
 export default function RootLayout({
@@ -20,11 +21,15 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
           rel="stylesheet"
         />
+        {/* Google Identity Services SDK */}
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
       </head>
       <body>
         <canvas id="space-canvas" aria-hidden="true" />
         <div className="app-wrapper">
-          {children}
+          <LocaleProvider>
+            {children}
+          </LocaleProvider>
         </div>
       </body>
     </html>

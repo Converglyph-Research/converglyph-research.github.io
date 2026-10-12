@@ -2,9 +2,10 @@
 
 import React from 'react';
 import { Navbar } from '@/components/layout/Navbar';
+import { useLocale } from '@/lib/LocaleContext';
 
 export function ClientNavbarWrapper() {
-  const [locale, setLocale] = React.useState<'en' | 'vi'>('en');
+  const { locale, setLocale } = useLocale();
 
   return (
     <Navbar

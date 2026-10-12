@@ -6,24 +6,13 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { PrototypeNotice } from '@/components/layout/PrototypeNotice';
 import { ProfileForm } from '@/components/report/ProfileForm';
-import { DICTIONARY, Locale } from '@/lib/i18n';
+import { useLocale } from '@/lib/LocaleContext';
 import { BirthProfile } from '@/lib/types';
 import { calculateProfileApi } from '@/lib/api';
 
 export default function HomePage() {
-  const [locale, setLocale] = React.useState<Locale>('en');
+  const { locale, setLocale, dict } = useLocale();
   const [isCalcOpen, setIsCalcOpen] = React.useState(false);
-  const dict = DICTIONARY[locale] || DICTIONARY.en;
-
-  React.useEffect(() => {
-    const saved = localStorage.getItem('aetheria_lang') as Locale | null;
-    if (saved === 'vi' || saved === 'en') {
-      setLocale(saved);
-    } else {
-      const navLang = (navigator.language || '').toLowerCase();
-      if (navLang.startsWith('vi')) setLocale('vi');
-    }
-  }, []);
 
   const handleProfileSubmit = async (p: BirthProfile) => {
     const rawData = await calculateProfileApi(p);
@@ -32,15 +21,13 @@ export default function HomePage() {
       window.location.href = '/explore?profile=custom';
     }
   };
+
   return (
     <>
       <PrototypeNotice bannerText={dict.proto_banner} />
       <Navbar
         currentLocale={locale}
-        onLocaleChange={(l) => {
-          setLocale(l);
-          localStorage.setItem('aetheria_lang', l);
-        }}
+        onLocaleChange={setLocale}
         onOpenCalc={() => setIsCalcOpen(true)}
       />
 

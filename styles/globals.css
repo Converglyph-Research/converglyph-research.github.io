@@ -715,3 +715,146 @@ body {
   }
   #space-canvas { display: none; }
 }
+
+/* ==========================================================================
+   EDITORIAL FOOTER STYLING
+   ========================================================================== */
+.footer {
+  background: #120F1B;
+  border-top: 1px solid var(--border-subtle);
+  padding: 5rem 0 3rem;
+  margin-top: 6rem;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.5fr repeat(3, 1fr);
+  gap: 3.5rem;
+  margin-bottom: 3.5rem;
+}
+
+.footer-col h4 {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--celestial-gold);
+  margin-bottom: 1.25rem;
+}
+
+.footer-col ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin: 0;
+  padding: 0;
+}
+
+.footer-col a {
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  transition: var(--transition-smooth);
+}
+
+.footer-col a:hover {
+  color: var(--moon-ivory);
+}
+
+.footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(245, 240, 232, 0.08);
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+/* ==========================================================================
+   EAST-WEST SYNTHESIS, TỬ VI PALACE GRID & ASTRO ANGLES
+   ========================================================================== */
+.synthesis-editorial-card {
+  background: var(--astral-violet);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 1.75rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.synthesis-card-title {
+  font-family: var(--font-serif);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--celestial-gold);
+  margin-bottom: 1rem;
+}
+
+.synthesis-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.synthesis-subbox {
+  background: rgba(23, 19, 33, 0.65);
+  border-radius: 10px;
+  padding: 1rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.tuvi-palace-cell {
+  background: rgba(23, 19, 33, 0.7);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 1.1rem;
+  transition: var(--transition-smooth);
+  cursor: pointer;
+}
+
+.tuvi-palace-cell:hover {
+  border-color: var(--color-tuvi);
+  transform: translateY(-2px);
+}
+
+.tuvi-palace-title {
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--moon-ivory);
+  margin-bottom: 0.35rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.tuvi-stars-list {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.astro-angle-box {
+  background: rgba(23, 19, 33, 0.65);
+  border-left: 3px solid var(--color-western);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.astro-angle-val {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--moon-ivory);
+}
+
+@media (max-width: 768px) {
+  .synthesis-columns { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 2rem; }
+  .footer-bottom { flex-direction: column; gap: 0.75rem; text-align: center; }
+}
