@@ -4,6 +4,21 @@ All component updates, bug fixes, and design system refinements are tracked belo
 
 ---
 
+### [2026-10-12 19:31:59 UTC] [FIX] Parse clear human-readable error messages on HTTP 402/401 and enrich Multi-System Life Map
+
+- **Context & Problem:**
+  Updated lib/ai.ts so non-200 responses parse the backend JSON payload (displaying 'Out of credits: Your account has exhausted all allocated AI reasoning runs...' or 'Authentication required: Please sign in with your Google account...') instead of the cryptic 'AI Gateway responded with HTTP 402' error. Enforced in server.py that unauthenticated requests (empty user_email) cannot bypass credits and are blocked with HTTP 401. Enriched ThemeCards with detailed archetype descriptions, vector directional valence explanations, and canonical axiom citations.
+- **Files Modified:**
+  - `lib/ai.ts`
+  - `server.py`
+  - `components/report/ThemeCards.tsx`
+- **Verification Evidence:**
+  Curl verified empty email returns 401 login_required and 0 credits returns 402 out of credits. TypeScript passed with 0 errors.
+- **Engineering Insights & Risk Mitigation:**
+  Extracting the actual JSON error string from failed HTTP responses prevents raw status code crashes and directly guides users to the Personal Space upgrade passes.
+
+---
+
 ### [2026-10-12 19:21:49 UTC] [FIX] Pure USD pricing across all passes and verified live credit decrement
 
 - **Context & Problem:**

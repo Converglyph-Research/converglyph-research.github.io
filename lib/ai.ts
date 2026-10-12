@@ -63,9 +63,15 @@ export async function streamAiReasoning({
       })
     });
     if (!resp.ok) {
-      throw new Error(`AI Gateway responded with HTTP ${resp.status}`);
+      let errMsg = `AI Gateway responded with HTTP ${resp.status}`;
+      try {
+        const errData = await resp.json();
+        if (errData?.error) {
+          errMsg = errData.error;
+        }
+      } catch {}
+      throw new Error(errMsg);
     }
-
     const data = await resp.json();
     const content = data.content || "No reasoning generated.";
     onChunk(content);
