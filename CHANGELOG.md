@@ -4,6 +4,22 @@ All component updates, bug fixes, and design system refinements are tracked belo
 
 ---
 
+### [2026-10-12 19:21:49 UTC] [FIX] Pure USD pricing across all passes and verified live credit decrement
+
+- **Context & Problem:**
+  Standardized all pricing passes across frontend and backend exclusively in USD (.49 for 3 days, .99 for 7 days, .99 for 30 days, 9.99 for 1 year). Fixed credit decrement logic so new accounts are automatically initialized with 5 starter credits, and every completed AI reasoning run decrements credits_remaining by 1 (tested live: 5 -> 4).
+- **Files Modified:**
+  - `server.py`
+  - `lib/ai.ts`
+  - `app/personal/page.tsx`
+  - `app/explore/page.tsx`
+- **Verification Evidence:**
+  curl verified initial credit 5, post-inference credit 4, and /api/subscription/status confirmed 4.
+- **Engineering Insights & Risk Mitigation:**
+  Passing user_email in both the request body and ensuring automatic starter credit row insertion guarantees seamless credit tracking across guest and authenticated tiers.
+
+---
+
 ### [2026-10-12 19:08:15 UTC] [FEAT] Stripe Checkout passes (3d, 7d, 30d, 1y), AI reasoning credit system, login requirement for Personal Chart, and enriched Life Map
 
 - **Context & Problem:**

@@ -342,10 +342,10 @@ export default function PersonalSpacePage() {
                     {isVi ? 'Gói Khám Phá' : '3-Day Fast Pass'}
                   </h4>
                   <div style={{ margin: '1rem 0' }}>
-                    <div style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--celestial-gold)', fontFamily: 'var(--font-serif)' }}>
-                      29.000₫ <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)', fontWeight: 400 }}>/ $1.49 / 1.29€</span>
+                    <div style={{ fontSize: '1.85rem', fontWeight: 700, color: 'var(--celestial-gold)', fontFamily: 'var(--font-serif)' }}>
+                      $1.49 <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)', fontWeight: 400 }}>USD</span>
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.2rem' }}>{isVi ? 'Hiệu lực 3 ngày' : 'Valid for 72 hours'}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.2rem' }}>{isVi ? 'Hiệu lực 3 ngày (72 giờ)' : 'Valid for 72 hours'}</div>
                   </div>
                   <ul style={{ fontSize: '0.8rem', color: '#cbd5e1', lineHeight: '1.6', paddingLeft: '1.25rem', marginBottom: '1.5rem' }}>
                     <li><strong>25 Lượt</strong> AI Deep Reasoning</li>
@@ -360,7 +360,7 @@ export default function PersonalSpacePage() {
                   onClick={() => handleBuyPlan('pass_3d')}
                   style={{ width: '100%', fontSize: '0.85rem' }}
                 >
-                  {checkoutLoading === 'pass_3d' ? 'Connecting...' : (isVi ? 'Đăng Ký 3 Ngày' : 'Get 3-Day Pass')}
+                  {checkoutLoading === 'pass_3d' ? 'Connecting...' : (isVi ? 'Đăng Ký $1.49' : 'Get 3-Day Pass ($1.49)')}
                 </button>
               </div>
 
@@ -372,8 +372,8 @@ export default function PersonalSpacePage() {
                     {isVi ? 'Gói Tuần Nghiên Cứu' : '7-Day Sprint Pass'}
                   </h4>
                   <div style={{ margin: '1rem 0' }}>
-                    <div style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--celestial-gold)', fontFamily: 'var(--font-serif)' }}>
-                      59.000₫ <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)', fontWeight: 400 }}>/ $2.99 / 2.69€</span>
+                    <div style={{ fontSize: '1.85rem', fontWeight: 700, color: 'var(--celestial-gold)', fontFamily: 'var(--font-serif)' }}>
+                      $2.99 <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)', fontWeight: 400 }}>USD</span>
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.2rem' }}>{isVi ? 'Tiết kiệm ~35%' : 'Save ~35%'}</div>
                   </div>
@@ -390,7 +390,7 @@ export default function PersonalSpacePage() {
                   onClick={() => handleBuyPlan('pass_7d')}
                   style={{ width: '100%', fontSize: '0.85rem' }}
                 >
-                  {checkoutLoading === 'pass_7d' ? 'Connecting...' : (isVi ? 'Đăng Ký 7 Ngày' : 'Get 7-Day Pass')}
+                  {checkoutLoading === 'pass_7d' ? 'Connecting...' : (isVi ? 'Đăng Ký $2.99' : 'Get 7-Day Pass ($2.99)')}
                 </button>
               </div>
 
@@ -402,8 +402,8 @@ export default function PersonalSpacePage() {
                     {isVi ? 'Gói Chuyên Nghiệp' : '30-Day Monthly Pro'}
                   </h4>
                   <div style={{ margin: '1rem 0' }}>
-                    <div style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--celestial-gold)', fontFamily: 'var(--font-serif)' }}>
-                      179.000₫ <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)', fontWeight: 400 }}>/ $8.99 / 7.99€</span>
+                    <div style={{ fontSize: '1.85rem', fontWeight: 700, color: 'var(--celestial-gold)', fontFamily: 'var(--font-serif)' }}>
+                      $8.99 <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)', fontWeight: 400 }}>USD</span>
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.2rem' }}>{isVi ? 'Tiết kiệm ~60%' : 'Save ~60%'}</div>
                   </div>
@@ -420,7 +420,7 @@ export default function PersonalSpacePage() {
                   onClick={() => handleBuyPlan('sub_30d')}
                   style={{ width: '100%', fontSize: '0.85rem' }}
                 >
-                  {checkoutLoading === 'sub_30d' ? 'Connecting...' : (isVi ? 'Đăng Ký 30 Ngày' : 'Get Monthly Pro')}
+                  {checkoutLoading === 'sub_30d' ? 'Connecting...' : (isVi ? 'Đăng Ký $8.99' : 'Get Monthly Pro ($8.99)')}
                 </button>
               </div>
 
@@ -432,8 +432,8 @@ export default function PersonalSpacePage() {
                     {isVi ? 'Gói Học Giả 1 Năm' : '1-Year Annual Scholar'}
                   </h4>
                   <div style={{ margin: '1rem 0' }}>
-                    <div style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--celestial-gold)', fontFamily: 'var(--font-serif)' }}>
-                      1.490.000₫ <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)', fontWeight: 400 }}>/ $69.99 / 64.99€</span>
+                    <div style={{ fontSize: '1.85rem', fontWeight: 700, color: 'var(--celestial-gold)', fontFamily: 'var(--font-serif)' }}>
+                      $69.99 <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)', fontWeight: 400 }}>USD</span>
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.2rem' }}>{isVi ? 'Tiết kiệm ~75%' : 'Best Value (~75% Off)'}</div>
                   </div>
@@ -450,7 +450,7 @@ export default function PersonalSpacePage() {
                   onClick={() => handleBuyPlan('sub_1y')}
                   style={{ width: '100%', fontSize: '0.85rem' }}
                 >
-                  {checkoutLoading === 'sub_1y' ? 'Connecting...' : (isVi ? 'Đăng Ký 1 Năm' : 'Get Annual Pass')}
+                  {checkoutLoading === 'sub_1y' ? 'Connecting...' : (isVi ? 'Đăng Ký $69.99' : 'Get Annual Pass ($69.99)')}
                 </button>
               </div>
             </div>

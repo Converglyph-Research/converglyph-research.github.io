@@ -8,6 +8,7 @@ export interface AiStreamOptions {
   systemPrompt: string;
   userPrompt: string;
   subjectName?: string;
+  userEmail?: string;
   method?: string;
   aspect?: string;
   aiLang?: string;
@@ -24,6 +25,7 @@ export async function streamAiReasoning({
   systemPrompt,
   userPrompt,
   subjectName = "Subject Profile",
+  userEmail = "",
   method = "unified",
   aspect = "all",
   aiLang = "vi",
@@ -50,6 +52,7 @@ export async function streamAiReasoning({
         systemPrompt,
         userPrompt,
         subject_name: subjectName,
+        user_email: userEmail,
         method,
         aspect,
         ai_lang: aiLang,

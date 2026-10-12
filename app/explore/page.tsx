@@ -364,12 +364,13 @@ REQUIREMENTS:
           return 'numerology';
         })
       : [method];
-
+    const currentSession = getUserSession();
     await streamAiReasoning({
       model: model || "openai/gpt-oss-120b",
       systemPrompt: sysPrompt,
       userPrompt,
       subjectName: name,
+      userEmail: currentSession?.email || '',
       method,
       aspect,
       aiLang,
