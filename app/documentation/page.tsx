@@ -1,10 +1,16 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import { ClientNavbarWrapper } from '@/components/layout/ClientNavbarWrapper';
 import { Footer } from '@/components/layout/Footer';
 import { PrototypeNotice } from '@/components/layout/PrototypeNotice';
+import { useLocale } from '@/lib/LocaleContext';
 
 export default function DocumentationPage() {
+  const { locale } = useLocale();
+  const isVi = (locale === 'vi');
+
   return (
     <>
       <PrototypeNotice />
@@ -13,13 +19,18 @@ export default function DocumentationPage() {
       <main className="section">
         <div className="container" style={{ maxWidth: '960px' }}>
           <div className="section-editorial-header">
-            <span className="section-editorial-eyebrow">Converglyph Research • Technical Specifications</span>
-            <h1 className="section-editorial-title">Platform Architecture, Calculation Engines & API Specifications</h1>
+            <span className="section-editorial-eyebrow">
+              {isVi ? 'CONVERGLYPH RESEARCH • HỆ THỐNG KỸ THUẬT' : 'Converglyph Research • Technical Specifications'}
+            </span>
+            <h1 className="section-editorial-title">
+              {isVi ? 'Kiến Trúc Nền Tảng, Động Cơ Tính Toán & Đặc Tả API' : 'Platform Architecture, Calculation Engines & API Specifications'}
+            </h1>
             <p className="section-editorial-desc">
-              Authoritative documentation covering isolated calculation engines, astronomical assumptions, calendar boundary algorithms, quantitative evaluation protocols, and REST API schemas.
+              {isVi
+                ? 'Tài liệu chuẩn xác về các động cơ tính toán độc lập, giả định thiên văn học, thuật toán ranh giới lịch, giao thức đánh giá thực nghiệm và cấu trúc REST API.'
+                : 'Authoritative documentation covering isolated calculation engines, astronomical assumptions, calendar boundary algorithms, quantitative evaluation protocols, and REST API schemas.'}
             </p>
           </div>
-
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             {/* 1. Western Astrology Engine */}
             <article className="matrix-editorial-card">

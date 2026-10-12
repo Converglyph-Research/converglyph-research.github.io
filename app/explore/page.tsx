@@ -455,13 +455,20 @@ export default function ExplorePage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {(synthesisData?.astro?.aspects || []).slice(0, 10).map((asp: any, idx: number) => (
-                          <tr key={`asp-${idx}`}>
-                            <td style={{ color: 'var(--color-western)', fontWeight: 600 }}>{asp.type}</td>
-                            <td>{asp.p1} &amp; {asp.p2}</td>
-                            <td>{asp.angle}° (orb {asp.orb}°)</td>
-                          </tr>
-                        ))}
+                        {(synthesisData?.astro?.aspects || []).slice(0, 10).map((asp: any, idx: number) => {
+                          const aspectTitle = asp.aspect_name || asp.aspect_vn || asp.type || 'Aspect';
+                          const p1Name = asp.body1_name || asp.body1_vn || asp.p1 || 'Body 1';
+                          const p2Name = asp.body2_name || asp.body2_vn || asp.p2 || 'Body 2';
+                          const angleVal = asp.actual_angle !== undefined ? asp.actual_angle : (asp.target_angle !== undefined ? asp.target_angle : (asp.angle || 0));
+                          const orbVal = asp.orb !== undefined ? asp.orb : 0;
+                          return (
+                            <tr key={`asp-${idx}`}>
+                              <td style={{ color: 'var(--color-western)', fontWeight: 600 }}>{aspectTitle}</td>
+                              <td>{p1Name} &amp; {p2Name}</td>
+                              <td>{angleVal}° (orb {orbVal}°)</td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>

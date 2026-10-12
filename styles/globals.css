@@ -613,34 +613,34 @@ body {
 
 /* Drawers with CSS hardware transform */
 .calc-drawer {
-  display: block !important;
-  position: fixed !important;
-  top: 0 !important;
-  right: 0 !important;
-  left: auto !important;
-  bottom: 0 !important;
-  width: 540px !important;
-  max-width: 95vw !important;
-  height: 100vh !important;
-  margin: 0 !important;
-  background: #1C172A !important;
-  border: none !important;
-  border-left: 1px solid rgba(217, 193, 143, 0.25) !important;
-  z-index: 1000 !important;
-  padding: 2.5rem 2.25rem !important;
-  overflow-y: auto !important;
-  box-shadow: -20px 0 60px rgba(0, 0, 0, 0.8) !important;
-  transform: translateX(110%) !important;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  color: var(--moon-ivory) !important;
-  pointer-events: none !important;
-  visibility: hidden !important;
+  display: block;
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: auto;
+  bottom: 0;
+  width: 540px;
+  max-width: 95vw;
+  height: 100vh;
+  margin: 0;
+  background: #1C172A;
+  border: none;
+  border-left: 1px solid rgba(217, 193, 143, 0.25);
+  z-index: 1000;
+  padding: 2.5rem 2.25rem;
+  overflow-y: auto;
+  box-shadow: -20px 0 60px rgba(0, 0, 0, 0.8);
+  transform: translateX(110%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  color: var(--moon-ivory);
+  pointer-events: none;
+  visibility: hidden;
 }
 
 .calc-drawer.open {
-  transform: translateX(0%) !important;
-  pointer-events: auto !important;
-  visibility: visible !important;
+  transform: translateX(0%);
+  pointer-events: auto;
+  visibility: visible;
 }
 
 .drawer-backdrop {

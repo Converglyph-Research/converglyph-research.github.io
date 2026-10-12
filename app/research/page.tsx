@@ -8,10 +8,9 @@ import { PrototypeNotice } from '@/components/layout/PrototypeNotice';
 import { PredictionLedger } from '@/components/research/PredictionLedger';
 import { fetchOutcomesApi, fetchMethodologiesApi } from '@/lib/api';
 import { LedgerRecord } from '@/lib/types';
-import { Locale } from '@/lib/i18n';
-
+import { useLocale } from '@/lib/LocaleContext';
 export default function ResearchPage() {
-  const [locale, setLocale] = React.useState<Locale>('en');
+  const { locale, setLocale, dict } = useLocale();
   const [records, setRecords] = React.useState<LedgerRecord[]>([]);
   const [methodologies, setMethodologies] = React.useState<Record<string, any>>({});
   const [isPreRegOpen, setIsPreRegOpen] = React.useState(false);
@@ -34,13 +33,19 @@ export default function ResearchPage() {
         {/* Research Header */}
         <section className="section">
           <div className="container">
-            <div className="section-editorial-header">
-              <span className="section-editorial-eyebrow">Academic & Scientific Layer</span>
-              <h1 className="section-editorial-title">Evaluation Framework & Provenance</h1>
-              <p className="section-editorial-desc">
-                Converglyph Research treats predictive capacity as an open scientific hypothesis. We record explicit claim provenance, track cross-system convergence, and maintain an immutable cryptographic forecast ledger.
-              </p>
-            </div>
+          <div className="section-editorial-header">
+            <span className="section-editorial-eyebrow">
+              {locale === 'vi' ? 'LỚP HỌC THUẬT & NGHIÊN CỨU THỰC NGHIỆM' : 'Academic & Scientific Layer'}
+            </span>
+            <h1 className="section-editorial-title">
+              {locale === 'vi' ? 'Khung Đánh Giá & Nguồn Gốc Mệnh Đề' : 'Evaluation Framework & Provenance'}
+            </h1>
+            <p className="section-editorial-desc">
+              {locale === 'vi'
+                ? 'Converglyph Research coi khả năng dự đoán là một giả thuyết khoa học mở. Chúng tôi ghi nhận xuất xứ tường minh của từng mệnh đề, theo dõi mức độ hội tụ đa hệ thống và duy trì sổ cái dự đoán bất biến bằng mã băm SHA-256.'
+                : 'Converglyph Research treats predictive capacity as an open scientific hypothesis. We record explicit claim provenance, track cross-system convergence, and maintain an immutable cryptographic forecast ledger.'}
+            </p>
+          </div>
 
             {/* Convergence vs Divergence Matrix */}
             <div className="matrix-editorial-container" id="systems-matrix" style={{ marginBottom: '4rem' }}>
@@ -51,15 +56,15 @@ export default function ResearchPage() {
                     <polyline points="22 4 12 14.01 9 11.01" />
                   </svg>
                   <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.45rem', fontWeight: 500, color: 'var(--moon-ivory)' }}>
-                    Interpretive Agreement Points
+                    {locale === 'vi' ? 'Điểm Đồng Thuận Ý Nghĩa' : 'Interpretive Agreement Points'}
                   </h3>
                 </div>
                 <table className="editorial-table">
                   <thead>
                     <tr>
-                      <th>Theme</th>
-                      <th>Cross-Tradition Signature</th>
-                      <th>Status</th>
+                      <th>{locale === 'vi' ? 'Chủ Đề' : 'Theme'}</th>
+                      <th>{locale === 'vi' ? 'Chữ Ký Biểu Tượng Đa Hệ Thống' : 'Cross-Tradition Signature'}</th>
+                      <th>{locale === 'vi' ? 'Trạng Thái' : 'Status'}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -92,15 +97,15 @@ export default function ResearchPage() {
                     <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
                   </svg>
                   <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.45rem', fontWeight: 500, color: 'var(--moon-ivory)' }}>
-                    Doctrinal Divergence
+                    {locale === 'vi' ? 'Điểm Phân Kỳ Giáo Lý' : 'Doctrinal Divergence'}
                   </h3>
                 </div>
                 <table className="editorial-table">
                   <thead>
                     <tr>
-                      <th>Theme</th>
-                      <th>Doctrinal Incongruity</th>
-                      <th>Source of Disagreement</th>
+                      <th>{locale === 'vi' ? 'Chủ Đề' : 'Theme'}</th>
+                      <th>{locale === 'vi' ? 'Sự Không Tương Thích' : 'Doctrinal Incongruity'}</th>
+                      <th>{locale === 'vi' ? 'Nguồn Gốc Khác Biệt' : 'Source of Disagreement'}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -252,10 +257,16 @@ export default function ResearchPage() {
             {/* Methodology Registry */}
             <div id="methodologies" style={{ marginTop: '4rem' }}>
               <div className="section-editorial-header">
-                <span className="section-editorial-eyebrow">Canonical Provenance</span>
-                <h2 className="section-editorial-title">Versioned Methodology Registry</h2>
+                <span className="section-editorial-eyebrow">
+                  {locale === 'vi' ? 'XUẤT XỨ QUY CHUẨN' : 'Canonical Provenance'}
+                </span>
+                <h2 className="section-editorial-title">
+                  {locale === 'vi' ? 'Hệ Quy Chuẩn Phương Pháp Luận' : 'Versioned Methodology Registry'}
+                </h2>
                 <p className="section-editorial-desc">
-                  Complete documentation of classical editions, computational libraries, and known limitations for every supported tradition.
+                  {locale === 'vi'
+                    ? 'Tài liệu chi tiết về các ấn bản kinh điển, thư viện tính toán toán học và giới hạn đã biết cho từng môn phái được hỗ trợ.'
+                    : 'Complete documentation of classical editions, computational libraries, and known limitations for every supported tradition.'}
                 </p>
               </div>
 

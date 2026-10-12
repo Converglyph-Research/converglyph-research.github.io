@@ -37,41 +37,40 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange }) => {
     setSession(s);
     if (onSessionChange) onSessionChange(s);
 
-    // Initialize Google Identity Services only when a valid client ID is provided in environment
+    // Initialize Google Identity Services if GSI client is loaded
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
-    const isValidClientId = clientId && !clientId.includes('aetheria.apps.googleusercontent.com');
     
-    if (isValidClientId && typeof window !== 'undefined' && window.google?.accounts?.id) {
+    if (typeof window !== 'undefined' && window.google?.accounts?.id) {
       setHasGoogleClient(true);
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: (response: any) => {
-          if (response?.credential) {
-            const decoded = decodeJwt(response.credential);
-            if (decoded) {
-              const newSession: UserSession = {
-                name: decoded.name || decoded.email,
-                email: decoded.email,
-                picture: decoded.picture,
-                sub: decoded.sub || `google-${Date.now()}`
-              };
-              saveUserSession(newSession);
-              setSession(newSession);
-              setIsModalOpen(false);
-              if (onSessionChange) onSessionChange(newSession);
-              window.location.assign('/explore/');
+      if (clientId) {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: (response: any) => {
+            if (response?.credential) {
+              const decoded = decodeJwt(response.credential);
+              if (decoded) {
+                const newSession: UserSession = {
+                  name: decoded.name || decoded.email,
+                  email: decoded.email,
+                  picture: decoded.picture,
+                  sub: decoded.sub || `google-${Date.now()}`
+                };
+                saveUserSession(newSession);
+                setSession(newSession);
+                setIsModalOpen(false);
+                if (onSessionChange) onSessionChange(newSession);
+              }
             }
           }
-        }
-      });
+        });
+      }
     }
   }, []);
 
-  // When modal opens and valid client ID is present, render the official Google button
+  // When modal opens, render the official Google button if configured, or setup direct login
   React.useEffect(() => {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
-    const isValidClientId = clientId && !clientId.includes('aetheria.apps.googleusercontent.com');
-    if (isModalOpen && isValidClientId && window.google?.accounts?.id && googleBtnContainerRef.current) {
+    if (isModalOpen && clientId && window.google?.accounts?.id && googleBtnContainerRef.current) {
       window.google.accounts.id.renderButton(googleBtnContainerRef.current, {
         theme: 'filled_black',
         size: 'large',
@@ -81,6 +80,14 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange }) => {
     }
   }, [isModalOpen]);
 
+  const triggerGooglePrompt = () => {
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
+    if (clientId && window.google?.accounts?.id) {
+      window.google.accounts.id.prompt();
+    } else {
+      setIsModalOpen(true);
+    }
+  };
   const handleOpenAuth = () => {
     setIsModalOpen(true);
   };
@@ -133,8 +140,8 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange }) => {
     <>
       <button
         type="button"
-      onClick={handleOpenAuth}
-      className="btn"
+        onClick={triggerGooglePrompt}
+        className="btn"
       style={{
         fontSize: '0.75rem',
         padding: '0.35rem 0.85rem',
@@ -162,7 +169,7 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange }) => {
       {isModalOpen && (
         <>
           <div className="drawer-backdrop active" onClick={() => setIsModalOpen(false)} aria-hidden="true" />
-          <dialog className="calc-drawer open" style={{ width: '460px', zIndex: 1100, display: 'block' }}>
+          <dialog open className="calc-drawer open" style={{ width: '460px', zIndex: 1100, display: 'block' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <div>
                 <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', color: 'var(--moon-ivory)' }}>
