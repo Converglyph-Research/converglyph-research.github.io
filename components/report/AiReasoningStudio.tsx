@@ -1,6 +1,6 @@
 import React from 'react';
 import katex from 'katex';
-
+import { fetchAiHistoryApi } from '@/lib/api';
 /**
  * Robust Markdown-to-HTML Parser with Full LaTeX Math Support ($ and $$) and Table Support
  */
@@ -199,6 +199,10 @@ export const AiReasoningStudio: React.FC<AiReasoningStudioProps> = ({
   const [selectedModel, setSelectedModel] = React.useState<string>('openai/gpt-oss-120b');
   const [aiLang, setAiLang] = React.useState<'vi' | 'en'>(isVietnamese ? 'vi' : 'en');
   const [timeHorizon, setTimeHorizon] = React.useState<'whole_life' | 'youth' | 'middle_age' | 'senior' | 'current_decade' | 'upcoming_year'>('whole_life');
+  const [historyItems, setHistoryItems] = React.useState<any[]>([]);
+  const [showHistoryModal, setShowHistoryModal] = React.useState<boolean>(false);
+  const [loadingHistory, setLoadingHistory] = React.useState<boolean>(false);
+  const [viewingHistoryItem, setViewingHistoryItem] = React.useState<any>(null);
 
   // Aspect options tailored to each method
   const methodAspects: Record<string, Array<{ id: string; labelEn: string; labelVi: string }>> = {
@@ -288,16 +292,35 @@ export const AiReasoningStudio: React.FC<AiReasoningStudioProps> = ({
           </p>
         </div>
 
-        <button
-          type="button"
-          className="btn btn-primary"
-          disabled={isLoading || isUnifiedLocked}
-          onClick={handleRun}
-          style={{ padding: '0.75rem 1.4rem', fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
-        >
-          <span>{isLoading ? '⏳' : '🧠'}</span>
-          <span>{isLoading ? (isVietnamese ? 'Đang suy luận...' : 'Synthesizing...') : (isVietnamese ? 'Khởi Chạy Suy Luận' : 'Run Deep Reasoning')}</span>
-        </button>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={async () => {
+              setShowHistoryModal(true);
+              setLoadingHistory(true);
+              try {
+                const items = await fetchAiHistoryApi(subjectName);
+                setHistoryItems(items);
+              } catch {}
+              finally { setLoadingHistory(false); }
+            }}
+            style={{ padding: '0.75rem 1rem', fontSize: '0.85rem' }}
+            title={isVietnamese ? "Xem lịch sử các bản luận giải đã lưu cho hồ sơ này" : "View previously saved AI reasoning runs"}
+          >
+            📚 {isVietnamese ? "Lịch Sử Luận Giải" : "Reasoning Archive"}
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={isLoading || isUnifiedLocked}
+            onClick={handleRun}
+            style={{ padding: '0.75rem 1.4rem', fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <span>{isLoading ? '⏳' : '🧠'}</span>
+            <span>{isLoading ? (isVietnamese ? 'Đang suy luận...' : 'Synthesizing...') : (isVietnamese ? 'Khởi Chạy Suy Luận' : 'Run Deep Reasoning')}</span>
+          </button>
+        </div>
       </div>
 
       {/* Control Grid: Method, Aspect, Time-Series Horizon, Model, and Language */}
@@ -464,6 +487,111 @@ export const AiReasoningStudio: React.FC<AiReasoningStudioProps> = ({
               ? 'Chọn phương pháp, khía cạnh trọng tâm, chu kỳ thời gian (Time Series), mô hình LLM và ngôn ngữ bạn mong muốn ở trên, sau đó nhấn "Khởi Chạy Suy Luận" để nhận bản luận giải chuyên sâu với công thức toán học KaTeX và bảng đối sánh Markdown hoàn chỉnh.'
               : 'Configure your method, specific aspect, life stage time-series, LLM model, and response language above, then tap "Run Deep Reasoning" to stream comprehensive Chain-of-Thought synthesis with KaTeX-rendered mathematics and styled comparison tables.'}
           </p>
+        </div>
+      )}
+      {/* History Archive Modal Dialog */}
+      {showHistoryModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(10, 8, 16, 0.85)',
+            backdropFilter: 'blur(10px)',
+            zIndex: 10002,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.25rem'
+          }}
+          onClick={() => setShowHistoryModal(false)}
+        >
+          <div
+            style={{
+              background: '#1A1528',
+              border: '1px solid rgba(217, 193, 143, 0.35)',
+              borderRadius: '16px',
+              width: '100%',
+              maxWidth: '720px',
+              maxHeight: '85vh',
+              overflowY: 'auto',
+              padding: '2rem',
+              color: 'var(--moon-ivory)',
+              position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.85rem' }}>
+              <div>
+                <h4 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.45rem', color: 'var(--celestial-gold)' }}>
+                  📚 {isVietnamese ? 'Lịch Sử Các Bản Luận Giải Đã Lưu' : 'Saved AI Reasoning History'}
+                </h4>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                  {subjectName} • {historyItems.length} {isVietnamese ? 'bản ghi' : 'runs saved in SQLite database'}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowHistoryModal(false)}
+                style={{ background: 'none', border: 'none', fontSize: '1.6rem', color: 'var(--moon-ivory)', cursor: 'pointer' }}
+              >
+                &times;
+              </button>
+            </div>
+
+            {loadingHistory ? (
+              <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                {isVietnamese ? 'Đang tải lịch sử từ cơ sở dữ liệu...' : 'Loading reasoning history from database...'}
+              </p>
+            ) : historyItems.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: 'var(--text-muted)' }}>
+                <p>{isVietnamese ? 'Chưa có bản luận giải nào được lưu trong cơ sở dữ liệu cho hồ sơ này.' : 'No AI reasoning runs saved yet for this profile.'}</p>
+                <p style={{ fontSize: '0.75rem', marginTop: '0.5rem', color: 'var(--text-dim)' }}>
+                  {isVietnamese ? 'Mỗi khi bạn chạy "Khởi Chạy Suy Luận", kết quả sẽ tự động lưu vào SQLite để xem lại bất cứ lúc nào.' : 'Every time you run deep reasoning, results are auto-saved to SQLite.'}
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {historyItems.map((item, idx) => (
+                  <div
+                    key={`hist-${idx}`}
+                    style={{
+                      background: 'rgba(0,0,0,0.3)',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: '10px',
+                      padding: '1.25rem'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span className="status-chip confirmed" style={{ fontSize: '0.7rem' }}>{item.method?.toUpperCase()}</span>
+                        <strong style={{ fontSize: '0.85rem', color: 'var(--moon-ivory)' }}>{item.aspect}</strong>
+                      </div>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                        {item.created_at} • {item.model}
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        maxHeight: '160px',
+                        overflowY: 'auto',
+                        background: 'rgba(18, 14, 28, 0.6)',
+                        padding: '0.85rem',
+                        borderRadius: '6px',
+                        fontSize: '0.8rem',
+                        lineHeight: 1.6,
+                        color: '#cbd5e1'
+                      }}
+                      dangerouslySetInnerHTML={{ __html: formatAiMarkdown(item.content) }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

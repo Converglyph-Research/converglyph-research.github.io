@@ -4,6 +4,21 @@ All component updates, bug fixes, and design system refinements are tracked belo
 
 ---
 
+### [2026-10-12 18:32:06 UTC] [FEAT] Reasoning Archive modal dialog and SQLite persistence for all AI inference categories
+
+- **Context & Problem:**
+  Added ai_reasoning_logs table in backend SQLite database storing all generated AI reasoning runs categorized by subject_name, method, aspect, model, ai_lang, time_horizon, and timestamp. Added GET /api/ai/history endpoint and integrated an interactive '📚 Lịch Sử Luận Giải / Reasoning Archive' modal dialog into AiReasoningStudio on /explore.
+- **Files Modified:**
+  - `components/report/AiReasoningStudio.tsx`
+  - `lib/api.ts`
+  - `server.py`
+- **Verification Evidence:**
+  TypeScript compiled cleanly; verified /api/ai/history endpoint returning valid JSON logs.
+- **Engineering Insights & Risk Mitigation:**
+  Storing historical AI interpretations across individual categories allows users to re-examine reasoning runs across sessions without paying duplicate inference costs.
+
+---
+
 ### [2026-10-12 18:20:22 UTC] [DOCS] Exhaustive technical calculation formulas documented on /documentation with KaTeX
 
 - **Context & Problem:**

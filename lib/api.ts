@@ -63,6 +63,20 @@ export async function loadSavedProfileApi(id: number | string): Promise<{ profil
   return null;
 }
 
+export async function fetchAiHistoryApi(subjectName?: string, method?: string, aspect?: string): Promise<any[]> {
+  try {
+    const params = new URLSearchParams();
+    if (subjectName) params.append('name', subjectName);
+    if (method) params.append('method', method);
+    if (aspect) params.append('aspect', aspect);
+    const resp = await fetch(`${API_BASE}/api/ai/history?${params.toString()}`);
+    if (resp.ok) {
+      const data = await resp.json();
+      return data.history || [];
+    }
+  } catch {}
+  return [];
+}
 export async function fetchCompareApi(profile: BirthProfile, lang: 'en' | 'vi'): Promise<unknown> {
   const resp = await fetch(`${API_BASE}/api/compare`, {
     method: 'POST',
