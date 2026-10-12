@@ -22,7 +22,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="navbar">
       <div className="container nav-container">
-        <Link href="/" className="nav-brand" aria-label="Aetheria Research Home">
+        <Link href="/" className="nav-brand" aria-label="Converglyph Research Home">
           <div className="brand-glyph">
             <svg viewBox="0 0 100 100" fill="none" stroke="currentColor">
               <circle cx="50" cy="50" r="44" stroke="#D9C18F" strokeWidth="1.5" strokeDasharray="3 3"/>

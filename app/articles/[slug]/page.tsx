@@ -48,7 +48,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
                 {article.title}
               </h1>
               <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
-                {article.read_time} • {article.date} • Aetheria Research
+                {article.read_time} • {article.date} • Converglyph Research
               </div>
             </div>
 

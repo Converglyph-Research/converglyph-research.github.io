@@ -38,7 +38,7 @@ export default function ResearchPage() {
               <span className="section-editorial-eyebrow">Academic & Scientific Layer</span>
               <h1 className="section-editorial-title">Evaluation Framework & Provenance</h1>
               <p className="section-editorial-desc">
-                Aetheria Research treats predictive capacity as an open scientific hypothesis. We record explicit claim provenance, track cross-system convergence, and maintain an immutable cryptographic forecast ledger.
+                Converglyph Research treats predictive capacity as an open scientific hypothesis. We record explicit claim provenance, track cross-system convergence, and maintain an immutable cryptographic forecast ledger.
               </p>
             </div>
 
@@ -131,6 +131,123 @@ export default function ResearchPage() {
               isVietnamese={locale === 'vi'}
               onOpenPreReg={() => setIsPreRegOpen(true)}
             />
+
+            {/* Pre-Registration Drawer / Modal */}
+            {isPreRegOpen && (
+              <>
+                <div className="drawer-backdrop active" onClick={() => setIsPreRegOpen(false)} aria-hidden="true" />
+                <dialog className="calc-drawer open" id="prereg-drawer" style={{ width: '600px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <div>
+                      <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', color: 'var(--moon-ivory)' }}>
+                        {locale === 'vi' ? 'Khóa Dự Đoán Triển Vọng (Pre-Register)' : 'Pre-Register Prospective Forecast'}
+                      </h3>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        Cryptographically lock a testable prediction with SHA-256 before the event observation window opens.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsPreRegOpen(false)}
+                      style={{ background: 'none', border: 'none', fontSize: '1.6rem', color: 'var(--moon-ivory)', cursor: 'pointer' }}
+                    >
+                      &times;
+                    </button>
+                  </div>
+
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      const fd = new FormData(e.currentTarget);
+                      const subject = (fd.get('subject') as string) || 'Pilot Subject';
+                      const tradition = (fd.get('tradition') as string) || 'western_astrology';
+                      const domain = (fd.get('domain') as string) || 'vocation_career';
+                      const statement = (fd.get('statement') as string) || '';
+                      const prob = parseFloat((fd.get('probability') as string) || '0.50');
+                      const targetWindow = (fd.get('window') as string) || '2027-Q1 to 2027-Q4';
+
+                      const PROD_GATEWAY = "https://meeting-tue-transform-cole.trycloudflare.com";
+                      const apiBase = (typeof window !== 'undefined' && window.location.hostname.includes('github.io')) ? PROD_GATEWAY : '';
+                      try {
+                        const resp = await fetch(`${apiBase}/api/ledger/lock`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            subject_name: subject,
+                            tradition,
+                            domain,
+                            statement,
+                            forecast_probability: prob,
+                            target_window: targetWindow
+                          })
+                        });
+                        if (resp.ok) {
+                          alert('Prediction successfully locked on SHA-256 ledger!');
+                          setIsPreRegOpen(false);
+                          fetchOutcomesApi().then(setRecords).catch(console.warn);
+                        } else {
+                          alert('Failed to pre-register prediction');
+                        }
+                      } catch (err) {
+                        alert(`Connection error: ${err}`);
+                      }
+                    }}
+                  >
+                    <div className="form-group" style={{ marginBottom: '1rem' }}>
+                      <label className="form-label">Subject / Target</label>
+                      <input name="subject" defaultValue="Albert Einstein Cohort" className="text-input" required />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: '1rem' }}>
+                      <label className="form-label">Tradition</label>
+                      <select name="tradition" className="select-editorial" style={{ width: '100%' }}>
+                        <option value="western_astrology">Western Ephemeris Astrology</option>
+                        <option value="chinese_bazi">Four Pillars of Destiny (BaZi)</option>
+                        <option value="chinese_tuvi">Tử Vi Đẩu Số</option>
+                        <option value="pythagorean_numerology">Pythagorean Numerology</option>
+                      </select>
+                    </div>
+                    <div className="form-group" style={{ marginBottom: '1rem' }}>
+                      <label className="form-label">Life Domain</label>
+                      <select name="domain" className="select-editorial" style={{ width: '100%' }}>
+                        <option value="vocation_career">Vocation & Executive Agency</option>
+                        <option value="intellect_innovation">Intellect & Theoretical Innovation</option>
+                        <option value="material_wealth">Material Resources & Capital</option>
+                        <option value="partnership_alliances">Partnership & Relational Contracts</option>
+                      </select>
+                    </div>
+                    <div className="form-group" style={{ marginBottom: '1rem' }}>
+                      <label className="form-label">Testable Proposition Statement</label>
+                      <textarea
+                        name="statement"
+                        required
+                        rows={3}
+                        className="text-input"
+                        defaultValue="Midheaven transit triggers significant vocational restructuring during target cycle."
+                        style={{ resize: 'vertical' }}
+                      />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+                      <div className="form-group">
+                        <label className="form-label">Forecast Probability (0.0 – 1.0)</label>
+                        <input name="probability" type="number" step="0.05" min="0" max="1" defaultValue="0.75" className="text-input" required />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Observation Window</label>
+                        <input name="window" defaultValue="2027-Q1 to 2027-Q4" className="text-input" required />
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                      <button type="button" className="btn btn-outline" onClick={() => setIsPreRegOpen(false)}>
+                        Cancel
+                      </button>
+                      <button type="submit" className="btn btn-primary">
+                        🔒 Lock Prediction
+                      </button>
+                    </div>
+                  </form>
+                </dialog>
+              </>
+            )}
 
             {/* Methodology Registry */}
             <div id="methodologies" style={{ marginTop: '4rem' }}>

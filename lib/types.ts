@@ -1,6 +1,5 @@
 /**
- * Aetheria Research Canonical Types & Contracts
- * Single source of truth for profiles, scores, claims, and prediction ledger
+ * Converglyph Research Canonical Types & Contracts
  */
 
 export interface BirthProfile {

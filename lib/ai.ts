@@ -1,5 +1,5 @@
 /**
- * Aetheria AI Reasoning Client
+ * Converglyph AI Reasoning Client
  * Calls the backend /api/ai/reasoning proxy endpoint to avoid exposing API keys in public frontend code.
  */
 

@@ -1,5 +1,5 @@
 /**
- * Aetheria Research Profile Repositories & Score Derivation Logic
+ * Converglyph Research Profile Repositories & Score Derivation Logic
  */
 import { BirthProfile, LifeMapResult } from './types';
 

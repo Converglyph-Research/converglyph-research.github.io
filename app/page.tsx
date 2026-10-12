@@ -17,7 +17,7 @@ export default function HomePage() {
   const handleProfileSubmit = async (p: BirthProfile) => {
     const rawData = await calculateProfileApi(p);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('aetheria_custom_profile', JSON.stringify({ profile: p, rawData }));
+      localStorage.setItem('converglyph_custom_profile', JSON.stringify({ profile: p, rawData }));
       window.location.href = '/explore?profile=custom';
     }
   };

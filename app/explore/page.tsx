@@ -32,7 +32,7 @@ export default function ExplorePage() {
     // Check if custom profile was saved from home form
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
-      const savedCustom = localStorage.getItem('aetheria_custom_profile');
+      const savedCustom = localStorage.getItem('converglyph_custom_profile') || localStorage.getItem('aetheria_custom_profile');
       if (urlParams.get('profile') === 'custom' && savedCustom) {
         try {
           const parsed = JSON.parse(savedCustom);

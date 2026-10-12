@@ -1,5 +1,5 @@
 /**
- * Centralized API client for Aetheria Research
+ * Centralized API client for Converglyph Research
  */
 import { BirthProfile, LedgerRecord, ResearchArticle } from './types';
 

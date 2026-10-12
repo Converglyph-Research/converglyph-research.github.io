@@ -1,6 +1,6 @@
 /**
- * Aetheria Research Localization Dictionary
- * Clear, plain-language translations based on paste-8 recommendations
+ * Converglyph Research Localization Dictionary
+ * Clear, plain-language translations based on empirical standards
  */
 
 export type Locale = 'en' | 'vi';
