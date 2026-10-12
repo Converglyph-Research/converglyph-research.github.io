@@ -133,20 +133,32 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange }) => {
     <>
       <button
         type="button"
-        onClick={handleOpenAuth}
-        className="btn btn-outline"
-        style={{ fontSize: '0.75rem', padding: '0.35rem 0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0, whiteSpace: 'nowrap' }}
-        aria-haspopup="dialog"
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
-          <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z" />
-          <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z" />
-          <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3 0-.8.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15.2c0 2.8.7 5.5 1.9 7.9l3.7-2.9z" />
-          <path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 16.9C3.7 20.7 7.5 23.5 12 23.5z" />
-        </svg>
-        <span>{dict.google_signin}</span>
-      </button>
-
+      onClick={handleOpenAuth}
+      className="btn"
+      style={{
+        fontSize: '0.75rem',
+        padding: '0.35rem 0.85rem',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+        flexShrink: 0,
+        whiteSpace: 'nowrap',
+        background: '#FFFFFF',
+        color: '#1F1F1F',
+        border: '1px solid #747775',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.18)',
+        fontWeight: 500
+      }}
+      aria-haspopup="dialog"
+    >
+      <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z" />
+        <path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 16.9C3.7 20.7 7.5 23.5 12 23.5z" />
+        <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3 0-.8.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15.2c0 2.8.7 5.5 1.9 7.9l3.7-2.9z" />
+        <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z" />
+      </svg>
+      <span>{dict.google_signin}</span>
+    </button>
       {isModalOpen && (
         <>
           <div className="drawer-backdrop active" onClick={() => setIsModalOpen(false)} aria-hidden="true" />

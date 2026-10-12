@@ -45,8 +45,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         >
           <Link href="/explore" className="nav-link">{dict.nav_explore}</Link>
           <Link href="/research" className="nav-link">{dict.nav_research}</Link>
+          <Link href="/articles" className="nav-link">{dict.nav_articles}</Link>
           <Link href="/documentation" className="nav-link">{dict.nav_docs}</Link>
-          <Link href="/#how-it-works" className="nav-link">{dict.nav_articles}</Link>
         </nav>
 
         {/* Language switch */}

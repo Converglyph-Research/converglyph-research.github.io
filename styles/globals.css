@@ -170,6 +170,8 @@ body {
   gap: 0.85rem;
   text-decoration: none;
   color: inherit;
+  min-width: 290px;
+  flex-shrink: 0;
 }
 
 .brand-glyph {
@@ -214,6 +216,7 @@ body {
   list-style: none;
   margin: 0;
   padding: 0;
+  flex-shrink: 0;
 }
 
 .nav-link {
@@ -243,9 +246,11 @@ body {
 .nav-cta {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.75rem;
   flex-shrink: 0;
   white-space: nowrap;
+  min-width: 320px;
 }
 .nav-mobile-toggle {
   display: none;
@@ -295,6 +300,9 @@ body {
   border-radius: 999px;
   padding: 0.2rem 0.6rem;
   font-family: var(--font-mono);
+  flex-shrink: 0;
+  width: 82px;
+  justify-content: center;
 }
 
 .lang-btn {

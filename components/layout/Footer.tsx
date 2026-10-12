@@ -24,6 +24,7 @@ export const Footer: React.FC = () => {
             <h4>{dict.footer_explore}</h4>
             <ul>
               <li><Link href="/explore">{dict.footer_lifemap}</Link></li>
+              <li><Link href="/articles">{dict.nav_articles}</Link></li>
               <li><Link href="/explore#deep-dive-lab">{dict.footer_lab}</Link></li>
               <li><Link href="/#how-it-works">{dict.footer_how}</Link></li>
               <li><Link href="/research#prediction-ledger">{dict.footer_ledger}</Link></li>
