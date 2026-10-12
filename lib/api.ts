@@ -135,6 +135,33 @@ export async function verifyStripeSessionApi(sessionId: string, email?: string):
     return { error: String(e) };
   }
 }
+export async function fetchPromoCaptchaApi(): Promise<{ challenge_id: string; question: string }> {
+  const resp = await fetch(`${API_BASE}/api/promo/captcha`);
+  if (!resp.ok) throw new Error('Failed to load captcha challenge');
+  return resp.json();
+}
+
+export async function applyPromoCodeApi(payload: {
+  user_email: string;
+  code: string;
+  challenge_id: string;
+  captcha_response: string;
+}): Promise<{
+  success?: boolean;
+  message?: string;
+  credits_added?: number;
+  total_credits?: number;
+  tier?: string;
+  expires_at?: string;
+  error?: string;
+}> {
+  const resp = await fetch(`${API_BASE}/api/promo/apply`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return resp.json();
+}
 
 export async function fetchCompareApi(profile: BirthProfile, lang: 'en' | 'vi'): Promise<unknown> {
   const resp = await fetch(`${API_BASE}/api/compare`, {

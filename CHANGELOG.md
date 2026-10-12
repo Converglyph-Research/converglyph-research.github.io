@@ -4,6 +4,21 @@ All component updates, bug fixes, and design system refinements are tracked belo
 
 ---
 
+### [2026-10-12 20:13:08 UTC] [FEATURE] Add Promo Code redemption form with infinite testing code and anti-brute-force Captcha
+
+- **Context & Problem:**
+  Implemented backend /api/promo/captcha and /api/promo/apply endpoints with SQLite tables promo_codes and captcha_challenges. Added CONVERGLYPH_INFINITY and PRO_TEST_UNLIMITED with infinite uses (max_uses = -1) for testing. Protected against brute-force attacks by requiring single-use math captchas that expire after 10 minutes and are immediately consumed. Added redemption UI to /personal with automatic error handling, live balance updates, and bilingual support.
+- **Files Modified:**
+  - `server.py`
+  - `lib/api.ts`
+  - `app/personal/page.tsx`
+- **Verification Evidence:**
+  Curl verified captcha generation, wrong captcha rejection, and reapplication of CONVERGLYPH_INFINITY granting +9,999 credits and Pro tier. TypeScript checked with 0 errors.
+- **Engineering Insights & Risk Mitigation:**
+  Storing single-use challenge IDs that are deleted on check completely eliminates replay attacks while allowing developers infinite coupon applications for test accounts.
+
+---
+
 ### [2026-10-12 19:31:59 UTC] [FIX] Parse clear human-readable error messages on HTTP 402/401 and enrich Multi-System Life Map
 
 - **Context & Problem:**

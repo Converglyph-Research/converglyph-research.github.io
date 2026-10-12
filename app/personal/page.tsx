@@ -13,23 +13,105 @@ import {
   fetchSubscriptionPlansApi,
   fetchUserSubscriptionStatusApi,
   createStripeCheckoutApi,
-  verifyStripeSessionApi
+  verifyStripeSessionApi,
+  fetchPromoCaptchaApi,
+  applyPromoCodeApi
 } from '@/lib/api';
 import { getUserSession, UserSession, getAccountProfileStorageKey } from '@/lib/auth';
 
 export default function PersonalSpacePage() {
   const { locale, setLocale } = useLocale();
   const [session, setSession] = React.useState<UserSession | null>(null);
-  const [customProfile, setCustomProfile] = React.useState<any>(null);
+  const [customProfile, setCustomProfile] = React.useState<{ profile: BirthProfile; rawData: unknown } | null>(null);
   const [isCalcOpen, setIsCalcOpen] = React.useState(false);
   const [subStatus, setSubStatus] = React.useState<{ tier: string; credits_remaining: number; is_pro: boolean; plan_id?: string; expires_at?: string }>({
     tier: 'free',
     credits_remaining: 5,
     is_pro: false
   });
-  const [plans, setPlans] = React.useState<any[]>([]);
+  const [plans, setPlans] = React.useState<Record<string, unknown>[]>([]);
   const [checkoutLoading, setCheckoutLoading] = React.useState<string | null>(null);
   const [verifyNotice, setVerifyNotice] = React.useState<string | null>(null);
+  // Promo Code & Captcha state
+  const [promoCode, setPromoCode] = React.useState('');
+  const [captchaData, setCaptchaData] = React.useState<{ challenge_id: string; question: string } | null>(null);
+  const [captchaAnswer, setCaptchaAnswer] = React.useState('');
+  const [promoLoading, setPromoLoading] = React.useState(false);
+  const [promoMessage, setPromoMessage] = React.useState<{ text: string; isError: boolean } | null>(null);
+
+  const loadCaptcha = React.useCallback(async () => {
+    try {
+      const data = await fetchPromoCaptchaApi();
+      setCaptchaData(data);
+      setCaptchaAnswer('');
+    } catch {
+      setCaptchaData(null);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    loadCaptcha();
+  }, [loadCaptcha]);
+
+  const handleApplyPromo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPromoMessage(null);
+    if (!session || !session.email) {
+      setPromoMessage({
+        text: isVi ? 'Vui lòng đăng nhập Google trước khi áp dụng mã khuyến mãi.' : 'Please sign in with Google before applying a promo code.',
+        isError: true
+      });
+      return;
+    }
+    if (!promoCode.trim()) {
+      setPromoMessage({
+        text: isVi ? 'Vui lòng nhập mã khuyến mãi.' : 'Please enter a promo code.',
+        isError: true
+      });
+      return;
+    }
+    if (!captchaData || !captchaAnswer.trim()) {
+      setPromoMessage({
+        text: isVi ? 'Vui lòng hoàn thành câu hỏi Captcha.' : 'Please answer the Captcha challenge.',
+        isError: true
+      });
+      return;
+    }
+
+    setPromoLoading(true);
+    try {
+      const res = await applyPromoCodeApi({
+        user_email: session.email,
+        code: promoCode.trim(),
+        challenge_id: captchaData.challenge_id,
+        captcha_response: captchaAnswer.trim()
+      });
+
+      if (res.error) {
+        setPromoMessage({ text: res.error, isError: true });
+        // Refresh captcha on failure to prevent replay
+        loadCaptcha();
+      } else if (res.success) {
+        setPromoMessage({
+          text: `${res.message} (+${res.credits_added} credits, Tổng: ${res.total_credits})`,
+          isError: false
+        });
+        setPromoCode('');
+        loadCaptcha();
+        // Refresh subscription balance
+        fetchUserSubscriptionStatusApi(session.email).then(setSubStatus).catch(console.warn);
+      }
+    } catch (err: unknown) {
+      const errMessage = err instanceof Error ? err.message : (isVi ? 'Không thể kết nối đến máy chủ.' : 'Could not connect to server.');
+      setPromoMessage({
+        text: errMessage,
+        isError: true
+      });
+      loadCaptcha();
+    } finally {
+      setPromoLoading(false);
+    }
+  };
 
   const isVi = (locale === 'vi');
 
@@ -454,6 +536,125 @@ export default function PersonalSpacePage() {
                 </button>
               </div>
             </div>
+          </div>
+          {/* Promo Code & Captcha Redemption Section */}
+          <div className="matrix-editorial-card" style={{ padding: '2rem', border: '1px solid rgba(217, 193, 143, 0.4)', borderRadius: '12px', background: 'rgba(217, 193, 143, 0.04)', marginBottom: '3.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div>
+                <span className="status-chip confirmed" style={{ fontSize: '0.7rem' }}>
+                  {isVi ? 'MÃ ƯU ĐÃI & KHUYẾN MÃI' : 'PROMO CODE REDEMPTION'}
+                </span>
+                <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.5rem', color: 'var(--moon-ivory)', marginTop: '0.5rem' }}>
+                  {isVi ? 'Áp Dụng Mã Ưu Đãi Nghiên Cứu' : 'Apply Research Promo Code'}
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', maxWidth: '600px', margin: '0.35rem 0 0' }}>
+                  {isVi
+                    ? 'Nhập mã kích hoạt của bạn để nhận thêm lượt suy luận AI hoặc nâng cấp tài khoản Pro. Xác minh Captcha bên dưới giúp ngăn chặn tấn công tự động brute-force.'
+                    : 'Enter your voucher code to grant AI reasoning runs or activate Pro access. Complete the anti-brute-force Captcha to verify.'}
+                </p>
+              </div>
+
+              {/* Testing Code Hint Pill */}
+              <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px dashed var(--celestial-gold)', borderRadius: '8px', padding: '0.6rem 0.9rem', fontSize: '0.75rem', color: 'var(--celestial-gold)', fontFamily: 'var(--font-mono)' }}>
+                <div><strong>Testing Infinite Code:</strong> <code>CONVERGLYPH_INFINITY</code></div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: '0.2rem' }}>Unlimited redemptions (+9,999 credits, Pro tier)</div>
+              </div>
+            </div>
+
+            {promoMessage && (
+              <div style={{
+                padding: '0.75rem 1rem',
+                borderRadius: '8px',
+                marginBottom: '1.25rem',
+                fontSize: '0.85rem',
+                background: promoMessage.isError ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                border: `1px solid ${promoMessage.isError ? '#ef4444' : '#10b981'}`,
+                color: promoMessage.isError ? '#fca5a5' : '#6ee7b7'
+              }}>
+                {promoMessage.isError ? '⚠️ ' : '✓ '} {promoMessage.text}
+              </div>
+            )}
+
+            <form onSubmit={handleApplyPromo} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', alignItems: 'flex-end' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '0.4rem', fontFamily: 'var(--font-mono)' }}>
+                  {isVi ? 'MÃ KHUYẾN MÃI' : 'PROMO CODE'}
+                </label>
+                <input
+                  type="text"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                  placeholder="e.g. CONVERGLYPH_INFINITY"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '8px',
+                    background: 'rgba(0,0,0,0.25)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: 'var(--moon-ivory)',
+                    fontSize: '0.9rem',
+                    fontFamily: 'var(--font-mono)'
+                  }}
+                />
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                    {isVi ? 'XÁC MINH CAPTCHA' : 'CAPTCHA CHALLENGE'}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={loadCaptcha}
+                    style={{ background: 'none', border: 'none', color: 'var(--celestial-gold)', fontSize: '0.7rem', cursor: 'pointer', padding: 0 }}
+                  >
+                    {isVi ? '↻ Đổi câu hỏi' : '↻ Refresh'}
+                  </button>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <div style={{
+                    padding: '0.75rem 0.9rem',
+                    background: 'rgba(217, 193, 143, 0.12)',
+                    border: '1px solid rgba(217, 193, 143, 0.3)',
+                    borderRadius: '8px',
+                    color: 'var(--celestial-gold)',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.85rem',
+                    whiteSpace: 'nowrap',
+                    fontWeight: 600
+                  }}>
+                    {captchaData ? captchaData.question : (isVi ? 'Đang tải...' : 'Loading...')}
+                  </div>
+                  <input
+                    type="text"
+                    value={captchaAnswer}
+                    onChange={(e) => setCaptchaAnswer(e.target.value)}
+                    placeholder={isVi ? 'Đáp án' : 'Answer'}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '8px',
+                      background: 'rgba(0,0,0,0.25)',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      color: 'var(--moon-ivory)',
+                      fontSize: '0.9rem',
+                      fontFamily: 'var(--font-mono)'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={promoLoading || !promoCode.trim() || !captchaAnswer.trim()}
+                  style={{ width: '100%', padding: '0.75rem 1.25rem', fontSize: '0.9rem' }}
+                >
+                  {promoLoading ? (isVi ? 'Đang xác minh...' : 'Verifying...') : (isVi ? 'Kích Hoạt Mã' : 'Redeem Code')}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </main>
