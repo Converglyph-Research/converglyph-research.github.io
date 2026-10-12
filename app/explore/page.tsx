@@ -174,17 +174,19 @@ export default function ExplorePage() {
     setAiThinkingText('');
   };
 
-  // Run AI Thinking CoT synthesis across specific methods, aspects, models, and languages
+  // Run AI Thinking CoT synthesis across specific methods, aspects, models, languages, and time horizons
   const handleRunAiThinking = async ({
     method = 'unified',
     aspect = 'all',
     model = 'openai/gpt-oss-120b',
-    aiLang = 'vi'
+    aiLang = 'vi',
+    timeHorizon = 'whole_life'
   }: {
     method: 'unified' | 'tuvi' | 'astro' | 'bazi' | 'numerology';
     aspect: string;
     model: string;
     aiLang: 'vi' | 'en';
+    timeHorizon: 'whole_life' | 'youth' | 'middle_age' | 'senior' | 'current_decade' | 'upcoming_year';
   }) => {
     setIsAiLoading(true);
     setAiThinkingText('');
@@ -197,22 +199,50 @@ export default function ExplorePage() {
     let sysPrompt = '';
     let userPrompt = '';
 
-    // Gather available data context from calculations
-    let contextData = `Subject: ${name}, Date: ${dateStr}, Location: ${loc}.\n`;
+    // Gather comprehensive multi-system data context from calculations
+    let contextData = `=== DỮ LIỆU ĐƯƠNG SỐ & ĐỘNG CƠ TÍNH TOÁN CHUẨN XÁC ===\n`;
+    contextData += `- Họ tên: ${name} | Ngày sinh: ${dateStr} | Nơi sinh: ${loc}\n`;
+    contextData += `- Chu kỳ thời gian khảo sát (Time Horizon): ${timeHorizon}\n`;
+    contextData += `- Khía cạnh trọng tâm (Aspect): ${aspect}\n\n`;
+
     if (synthesisData?.tuvi) {
       const tb = synthesisData.tuvi.thienBan || {};
-      contextData += `Tu Vi Ban Menh: ${tb.banMenh || 'N/A'}, Cuc: ${tb.cuc || 'N/A'}.\n`;
-    }
-    if (synthesisData?.astro) {
-      const b3 = synthesisData.astro.big_three || {};
-      contextData += `Western Big Three: Sun ${b3.sun?.sign || 'N/A'}, Moon ${b3.moon?.sign || 'N/A'}, Ascendant ${b3.ascendant?.sign_name || 'N/A'}.\n`;
+      contextData += `1. DỮ LIỆU TỬ VI ĐẨU SỐ:\n`;
+      contextData += `- Bản mệnh: ${tb.banMenh || 'N/A'} | Cục: ${tb.cuc || 'N/A'} | Âm dương: ${tb.amDuongMenh || 'N/A'}\n`;
+      contextData += `- Mệnh chủ: ${tb.menhChu || 'N/A'} | Thân chủ: ${tb.thanChu || 'N/A'}\n`;
+      const palaces = (synthesisData.tuvi.palaces || []).map((p: any) => `Cung ${p.tenCung} (${p.cungCanChi}): ${p.chinhTinh?.join(', ') || 'VCD'}`).join('; ');
+      contextData += `- 12 Cung: ${palaces}\n\n`;
     }
 
+    if (synthesisData?.astro) {
+      const b3 = synthesisData.astro.big_three || {};
+      contextData += `2. DỮ LIỆU CHIÊM TINH TÂY PHƯƠNG (SWISS EPHEMERIS):\n`;
+      contextData += `- Big Three: Sun ${b3.sun?.sign || 'N/A'}, Moon ${b3.moon?.sign || 'N/A'}, Ascendant ${b3.ascendant?.sign_name || 'N/A'}\n`;
+      const mc = synthesisData.astro.angles?.Midheaven;
+      if (mc) contextData += `- Midheaven (MC): ${mc.sign || 'N/A'} (${mc.degree || 0}°)\n`;
+      const aspectsList = (synthesisData.astro.aspects || []).slice(0, 10).map((a: any) => `${a.aspect_name || a.type}: ${a.body1_name || a.p1} & ${a.body2_name || a.p2} (${a.actual_angle || a.angle}°)`).join('; ');
+      contextData += `- Góc chiếu chính: ${aspectsList}\n\n`;
+    }
+
+    // BaZi and Numerology context from profileResult
+    const baziData = (profileResult as any)?.rawData?.bazi;
+    if (baziData) {
+      contextData += `3. DỮ LIỆU BÁT TỰ TỨ TRỤ:\n`;
+      contextData += `- Nhật Chủ (Day Master): ${baziData.day_master?.name || 'N/A'} (${baziData.day_master?.element || 'N/A'})\n`;
+      contextData += `- Tứ Trụ: Năm ${baziData.four_pillars?.year?.label || 'N/A'}, Tháng ${baziData.four_pillars?.month?.label || 'N/A'}, Ngày ${baziData.four_pillars?.day?.label || 'N/A'}, Giờ ${baziData.four_pillars?.hour?.label || 'N/A'}\n\n`;
+    }
+
+    const numData = (profileResult as any)?.rawData?.numerology;
+    if (numData) {
+      contextData += `4. DỮ LIỆU THẦN SỐ HỌC (PYTHAGOREAN DUAL LINEAGE):\n`;
+      contextData += `- Life Path Master Preservation (Công thức A): ${numData.life_path_master?.number || 'N/A'} (${numData.life_path_master?.archetype || 'N/A'})\n`;
+      contextData += `- Life Path Period Reduction (Công thức B): ${numData.life_path_reduced?.number || 'N/A'} (${numData.life_path_reduced?.archetype || 'N/A'})\n\n`;
+    }
     if (method === 'tuvi') {
       sysPrompt = isAiVi
-        ? "Bạn là Đại Sư Tử Vi Đẩu Số tinh thông cổ kim (kết hợp Tử Vi Toàn Thư, Trung Châu phái và phương pháp Tinh Bàn Tử Vân). Luận giải chuyên sâu theo tinh đẩu, miếu hãm, tam phương tứ chính và đại hạn. BẮT BUỘC TRÌNH BÀY MARKDOWN ĐẸP MẮT: dùng tiêu đề rõ ràng, bảng markdown đối chiếu và danh sách điểm gạch đầu dòng."
-        : "You are a Master of Classical Eastern Zi Wei Dou Shu (Purple Star Astrology). Provide an authoritative analysis of the 12 Palaces, star brightness levels, major luck decades, and transformations using clean Markdown headers, bullet points, and comparison tables.";
-      userPrompt = `${contextData}\nKhía cạnh khảo sát: ${aspect}.\nHãy phân tích chuyên sâu chi tiết: 1. Đắc Hãm & Cục Số, 2. Ảnh Hưởng Cung Trọng Tâm (${aspect}), 3. Bảng Phân Tích Cát/Hung & Tinh Đẩu, 4. Lời Khuyên Hành Động Thực Tiễn.`;
+        ? "Bạn là Đại Sư Tử Vi Đẩu Số tinh thông cổ kim (kết hợp Tử Vi Toàn Thư, Trung Châu phái và phương pháp Tinh Bàn Tử Vân). Phân tích chi tiết 12 cung, tinh đẩu miếu hãm, Tứ Hóa và đại hạn 10 năm theo chuỗi thời gian dòng đời (Time Series). BẮT BUỘC TRÌNH BÀY BẢNG MARKDOWN ĐỐI SOÁT VÀ ĐỀ MỤC RÕ RÀNG."
+        : "You are a Master of Classical Eastern Zi Wei Dou Shu (Purple Star Astrology). Provide an authoritative analysis of the 12 Palaces, star brightness levels, major luck decades, and transformations across the life-stage time series using clean Markdown headers, bullet points, and comparison tables.";
+      userPrompt = `${contextData}\nKhảo sát Cung/Tinh đẩu (${aspect}) theo giai đoạn: ${timeHorizon}.\nHãy phân tích: 1. Đắc Hãm & Cục Số Bản Thể, 2. Tác Động Trong Giai Đoạn (${timeHorizon}), 3. Bảng Phân Tích Cát/Hung & Tinh Đẩu (Bảng Markdown), 4. Lời Khuyên Hành Động & Hóa Giải.`;
     } else if (method === 'astro') {
       sysPrompt = isAiVi
         ? "Bạn là Chuyên gia Chiêm Tinh Học Tây Phương (Western Astrologer) chuẩn Astrodienst và Cosmobiology. Luận giải chuyên sâu dựa trên The Big Three (Sun, Moon, Ascendant), hệ thống 12 Nhà và mạng lưới góc chiếu hình học (Aspects) từ Swiss Ephemeris. BẮT BUỘC TRÌNH BÀY BẢNG MARKDOWN VÀ ĐỀ MỤC."
@@ -229,13 +259,26 @@ export default function ExplorePage() {
         : "You are a Pythagorean & Chaldean Numerology Scholar. Cross-examine Master Number preservation vs independent period reduction using structured Markdown tables.";
       userPrompt = `${contextData}\nKhía cạnh: ${aspect}.\nPhân tích: 1. Đối Chiếu Hai Công Thức Đường Đời (Bảng Markdown), 2. Con Số Linh Hồn & Biểu Đạt, 3. Chu Kỳ Cá Nhân & Kim Chỉ Nam.`;
     } else {
-      // Mode === 'unified' (Requires multi-system data)
+      // Mode === 'unified' (Requires multi-system data >= 2 methods)
       sysPrompt = isAiVi
-        ? "Bạn là Viện Trưởng Nghiên Cứu Mệnh Lý Học Đa Chiều (Converglyph Research). Hãy tích hợp và đối chiếu toàn bộ dữ liệu từ các phương pháp có sẵn (Chiêm Tinh Tây Phương, Tử Vi, Bát Tự, Thần Số Học). BẮT BUỘC TRÌNH BÀY:\n1. BẢNG ĐỒNG THUẬN Ý NGHĨA (Chủ đề, Dấu ấn các môn phái, Mức độ hội tụ)\n2. BẢNG PHÂN KỲ HỌC THUẬT (Mâu thuẫn giữa các quy tắc)\n3. KIM CHỈ NAM TỔNG HỢP TOÀN DIỆN."
-        : "You are the Lead Symbolic Intelligence Synthesizer at Converglyph Research. Synthesize all active calculation outputs across Western Astrology, Tu Vi, BaZi, and Numerology. YOU MUST PROVIDE:\n1. CONVERGENCE MATRIX TABLE (Theme, Cross-System Signatures, Alignment Level)\n2. DOCTRINAL DIVERGENCE TABLE (Rule Contradictions & Tension)\n3. UNIFIED STRATEGIC COUNSEL.";
-      userPrompt = `${contextData}\nKhía cạnh trọng tâm: ${aspect}.\nHãy thực hiện luận giải hợp nhất đa hệ thống với các bảng Markdown chi tiết.`;
+        ? `Bạn là Viện Trưởng Nghiên Cứu Mệnh Lý Học Đa Chiều (Converglyph Research Intelligence). Hãy thực thi chuỗi suy luận Chain-of-Thought (CoT) hợp nhất và đối chiếu toàn bộ dữ liệu từ các phương pháp có sẵn (Chiêm Tinh Tây Phương, Tử Vi, Bát Tự, Thần Số Học) theo chuỗi thời gian (Time Series).
+NGUYÊN TẮC SUY LUẬN & ĐỊNH DẠNG:
+1. ĐỐI SÁNH THEO CHUỖI THỜI GIAN: Phân tích sự hội tụ và biến đổi năng lượng trong giai đoạn (${timeHorizon}).
+2. CÔNG THỨC TOÁN HỌC & LATEX: Khi tính toán Thần Số Học hoặc chu kỳ, dùng định dạng LaTeX chuẩn $$...$$ hoặc $...$ (ví dụ: $$3 (\\text{Ngày}) + 7 (\\text{Tháng}) + 4 (\\text{Năm}) = 14$$).
+3. BẢNG MARKDOWN CHUYÊN NGHIỆP:
+   - BẢNG 1: MA TRẬN ĐỒNG THUẬN (Convergence Matrix) gồm các cột: | Chủ Đề / Khía Cạnh | Dấu Ấn Môn Phái (Tử Vi / Astro / BaZi) | Mức Độ Đồng Thuận (%) | Ý Nghĩa Hợp Nhất |
+   - BẢNG 2: ĐIỂM PHÂN KỲ & BỔ KHUYẾT (Divergence & Tension) gồm các cột: | Khía Cạnh | Điểm Mâu Thuẫn Giữa Các Quy Tắc | Nguồn Gốc Phân Kỳ | Hướng Giải Quyết |
+4. KIM CHỈ NAM HÀNH ĐỘNG KHAI PHÓNG.`
+        : `You are the Lead Symbolic Intelligence Synthesizer at Converglyph Research. Execute an integrated cross-examination across all active methods (Western Astrology, Tu Vi, BaZi, Numerology) across the life stage time-series (${timeHorizon}).
+REQUIREMENTS:
+1. TIME-SERIES EVALUATION: Analyze convergence and phase transitions during (${timeHorizon}).
+2. MATHEMATICAL FORMULAS: Use clean LaTeX ($$...$$ and $...$) for calculations.
+3. MARKDOWN COMPARISON TABLES:
+   - TABLE 1: CONVERGENCE MATRIX (| Theme | Traditions Alignment | Consensus Score | Unified Verdict |)
+   - TABLE 2: DOCTRINAL DIVERGENCE (| Dimension | Rule Conflict | Source of Tension | Reconciliation |)
+4. ACTIONABLE STRATEGIC SYNTHESIS.`;
+      userPrompt = `${contextData}\nKhía cạnh trọng tâm: ${aspect}.\nGiai đoạn thời gian: ${timeHorizon}.\nHãy thực hiện luận giải hợp nhất đa hệ thống với các bảng Markdown và công thức LaTeX hoàn chỉnh.`;
     }
-
     await streamAiReasoning({
       model: model || "openai/gpt-oss-120b",
       systemPrompt: sysPrompt,

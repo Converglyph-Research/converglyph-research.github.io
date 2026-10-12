@@ -1,30 +1,48 @@
 import React from 'react';
+import katex from 'katex';
 
 /**
- * Robust Markdown-to-HTML Parser with Table Support
+ * Robust Markdown-to-HTML Parser with Full LaTeX Math Support ($ and $$) and Table Support
  */
 export function formatAiMarkdown(md: string): string {
   if (!md) return '';
   let html = md;
 
+  // 1. Render Display Math ($$...$$) with KaTeX before HTML character escaping
+  html = html.replace(/\$\$([\s\S]+?)\$\$/g, (_, equation) => {
+    try {
+      return `<div class="katex-display-wrapper" style="overflow-x: auto; margin: 1rem 0; padding: 0.5rem 0; text-align: center;">${katex.renderToString(equation.trim(), { displayMode: true, throwOnError: false })}</div>`;
+    } catch {
+      return `<div style="text-align: center; font-family: var(--font-mono); margin: 0.75rem 0; color: var(--celestial-gold);">${equation}</div>`;
+    }
+  });
+
+  // 2. Render Inline Math ($...$) with KaTeX
+  html = html.replace(/\$([^\$\n]+?)\$/g, (_, equation) => {
+    try {
+      return katex.renderToString(equation.trim(), { displayMode: false, throwOnError: false });
+    } catch {
+      return `<code style="font-family: var(--font-mono); color: var(--celestial-gold);">${equation}</code>`;
+    }
+  });
+
   // Protect intentional line breaks
   html = html.replace(/<br\s*\/?>/gi, '___AIMD_BR___');
-  html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  html = html.replace(/___AIMD_BR___/g, '<br/>');
 
   // Fenced Code blocks
   html = html.replace(/```([a-z0-9_-]*)\n([\s\S]*?)```/gim, (_, __, code) => {
-    return `<pre style="background: rgba(0,0,0,0.5); padding: 1rem; border-radius: 8px; font-family: var(--font-mono); font-size: 0.8rem; overflow-x: auto; margin: 1rem 0;"><code>${code.trim()}</code></pre>`;
+    const escapedCode = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return `<pre style="background: rgba(0,0,0,0.5); padding: 1rem; border-radius: 8px; font-family: var(--font-mono); font-size: 0.8rem; overflow-x: auto; margin: 1rem 0;"><code>${escapedCode.trim()}</code></pre>`;
   });
 
   // Inline code
   html = html.replace(/`([^`\n]+)`/g, '<code style="background: rgba(217,193,143,0.15); color: var(--celestial-gold); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.85em;">$1</code>');
 
   // Headers
-  html = html.replace(/^#### (.*$)/gim, '<h5 style="font-family: var(--font-serif); font-size: 1.15rem; color: var(--celestial-gold); margin: 1rem 0 0.4rem;"><span style="color: var(--color-western);">▫</span> $1</h5>');
-  html = html.replace(/^### (.*$)/gim, '<h4 style="font-family: var(--font-serif); font-size: 1.3rem; color: var(--celestial-gold); margin: 1.35rem 0 0.5rem;"><span style="color: var(--color-western);">✦</span> $1</h4>');
-  html = html.replace(/^## (.*$)/gim, '<h3 style="font-family: var(--font-serif); font-size: 1.5rem; color: var(--moon-ivory); margin: 1.6rem 0 0.75rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.4rem;"><span style="color: var(--celestial-gold);">⚜</span> $1</h3>');
-  html = html.replace(/^# (.*$)/gim, '<h2 style="font-family: var(--font-serif); font-size: 1.75rem; color: var(--moon-ivory); margin: 1.85rem 0 0.85rem;">$1</h2>');
+  html = html.replace(/^#### (.*$)/gim, '<h5 style="font-family: var(--font-serif); font-size: 1.15rem; color: var(--celestial-gold); margin: 1.1rem 0 0.4rem;"><span style="color: var(--color-western);">▫</span> $1</h5>');
+  html = html.replace(/^### (.*$)/gim, '<h4 style="font-family: var(--font-serif); font-size: 1.35rem; color: var(--celestial-gold); margin: 1.45rem 0 0.55rem;"><span style="color: var(--color-western);">✦</span> $1</h4>');
+  html = html.replace(/^## (.*$)/gim, '<h3 style="font-family: var(--font-serif); font-size: 1.55rem; color: var(--moon-ivory); margin: 1.75rem 0 0.75rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.45rem;"><span style="color: var(--celestial-gold);">⚜</span> $1</h3>');
+  html = html.replace(/^# (.*$)/gim, '<h2 style="font-family: var(--font-serif); font-size: 1.85rem; color: var(--moon-ivory); margin: 2rem 0 0.95rem;">$1</h2>');
 
   // Bold & Italic
   html = html.replace(/\*\*\*(.*?)\*\*\*/gim, '<strong><em>$1</em></strong>');
@@ -74,31 +92,32 @@ export function formatAiMarkdown(md: string): string {
       let theadHtml = '<thead><tr>';
       headerCols.forEach((col, i) => {
         const align = aligns[i] || 'left';
-        theadHtml += `<th style="text-align:${align}; padding: 0.65rem 0.85rem; border-bottom: 2px solid rgba(217,193,143,0.3); color: var(--celestial-gold); font-family: var(--font-mono); font-size: 0.8rem;">${col}</th>`;
+        theadHtml += `<th style="text-align:${align}; padding: 0.75rem 0.95rem; border-bottom: 2px solid rgba(217,193,143,0.35); color: var(--celestial-gold); font-family: var(--font-mono); font-size: 0.8rem; background: rgba(38,33,58,0.5);">${col}</th>`;
       });
       theadHtml += '</tr></thead>';
 
       let tbodyHtml = '<tbody>';
-      dataLines.forEach(row => {
+      dataLines.forEach((row, rIdx) => {
         if (!row.trim()) return;
         const cols = splitRow(row);
-        tbodyHtml += '<tr style="border-bottom: 1px solid rgba(245,240,232,0.08);">';
+        const bgRow = rIdx % 2 === 1 ? 'background: rgba(255,255,255,0.02);' : '';
+        tbodyHtml += `<tr style="border-bottom: 1px solid rgba(245,240,232,0.08); ${bgRow}">`;
         headerCols.forEach((_, i) => {
           const align = aligns[i] || 'left';
           const val = cols[i] !== undefined ? cols[i] : '';
-          tbodyHtml += `<td style="text-align:${align}; padding: 0.6rem 0.85rem; font-size: 0.85rem; color: #cbd5e1;">${val}</td>`;
+          tbodyHtml += `<td style="text-align:${align}; padding: 0.65rem 0.95rem; font-size: 0.85rem; color: #cbd5e1; line-height: 1.5;">${val}</td>`;
         });
         tbodyHtml += '</tr>';
       });
       tbodyHtml += '</tbody>';
 
-      return `<div style="overflow-x: auto; margin: 1.25rem 0; border: 1px solid var(--border-subtle); border-radius: 8px; background: rgba(0,0,0,0.25);"><table style="width: 100%; border-collapse: collapse;">${theadHtml}${tbodyHtml}</table></div>`;
+      return `<div style="overflow-x: auto; margin: 1.5rem 0; border: 1px solid var(--border-subtle); border-radius: 10px; background: rgba(0,0,0,0.35); box-shadow: 0 4px 16px rgba(0,0,0,0.3);"><table style="width: 100%; border-collapse: collapse; text-align: left;">${theadHtml}${tbodyHtml}</table></div>`;
     }
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const trimmed = line.trim();
-      const isTableRow = trimmed.length > 0 && trimmed.includes('|') && !trimmed.startsWith('<h') && !trimmed.startsWith('<blockquote') && !trimmed.startsWith('<pre');
+      const isTableRow = trimmed.length > 0 && trimmed.includes('|') && !trimmed.startsWith('<h') && !trimmed.startsWith('<blockquote') && !trimmed.startsWith('<pre') && !trimmed.startsWith('<div');
 
       if (isTableRow) {
         tableLines.push(line);
@@ -121,10 +140,12 @@ export function formatAiMarkdown(md: string): string {
   html = processMarkdownTables(html);
 
   // Bullet Lists
-  html = html.replace(/^\s*[-*]\s+(.*$)/gim, '<div style="display: flex; gap: 0.5rem; margin: 0.4rem 0;"><span style="color: var(--celestial-gold);">•</span><span>$1</span></div>');
+  html = html.replace(/^\s*[-*]\s+(.*$)/gim, '<div style="display: flex; gap: 0.6rem; margin: 0.45rem 0; align-items: baseline;"><span style="color: var(--celestial-gold); font-size: 0.85em;">•</span><div style="flex: 1;">$1</div></div>');
 
   // Numbered Lists
-  html = html.replace(/^\s*(\d+)\.\s+(.*$)/gim, '<div style="display: flex; gap: 0.5rem; margin: 0.4rem 0;"><span style="color: var(--color-western); font-weight: 600; font-family: var(--font-mono);">$1.</span><span>$2</span></div>');
+  html = html.replace(/^\s*(\d+)\.\s+(.*$)/gim, '<div style="display: flex; gap: 0.6rem; margin: 0.45rem 0; align-items: baseline;"><span style="color: var(--color-western); font-weight: 600; font-family: var(--font-mono); font-size: 0.85em;">$1.</span><div style="flex: 1;">$2</div></div>');
+
+  html = html.replace(/___AIMD_BR___/g, '<br/>');
 
   return html;
 }
@@ -141,6 +162,7 @@ export interface AiReasoningStudioProps {
     aspect: string;
     model: string;
     aiLang: 'vi' | 'en';
+    timeHorizon: 'whole_life' | 'youth' | 'middle_age' | 'senior' | 'current_decade' | 'upcoming_year';
   }) => void;
   reasoningText: string;
   isLoading: boolean;
@@ -157,45 +179,61 @@ export const AiReasoningStudio: React.FC<AiReasoningStudioProps> = ({
   reasoningText,
   isLoading
 }) => {
-  // Method selection (user picks 1 method or unified synthesis)
   const [selectedMethod, setSelectedMethod] = React.useState<'unified' | 'tuvi' | 'astro' | 'bazi' | 'numerology'>('unified');
   const [selectedAspect, setSelectedAspect] = React.useState<string>('all');
   const [selectedModel, setSelectedModel] = React.useState<string>('openai/gpt-oss-120b');
   const [aiLang, setAiLang] = React.useState<'vi' | 'en'>(isVietnamese ? 'vi' : 'en');
+  const [timeHorizon, setTimeHorizon] = React.useState<'whole_life' | 'youth' | 'middle_age' | 'senior' | 'current_decade' | 'upcoming_year'>('whole_life');
 
   // Aspect options tailored to each method
   const methodAspects: Record<string, Array<{ id: string; labelEn: string; labelVi: string }>> = {
     unified: [
-      { id: 'all', labelEn: 'Complete Convergence & Divergence', labelVi: 'Hợp Nhất Toàn Diện 4 Hệ Thống' },
-      { id: 'career', labelEn: 'Vocation & Wealth Consensus', labelVi: 'Đồng Thuận Sự Nghiệp & Tài Bạch' },
-      { id: 'intellect', labelEn: 'Cognitive Architecture & Philosophy', labelVi: 'Trí Tuệ & Thế Giới Quan Cốt Lõi' },
-      { id: 'relationships', labelEn: 'Relational Contracts & Tension', labelVi: 'Tình Duyên & Điểm Mâu Thuẫn Hợp Đồng' }
+      { id: 'all', labelEn: 'Complete Convergence & Divergence Matrix', labelVi: 'Hợp Nhất Toàn Diện Ma Trận Đồng Thuận & Phân Kỳ' },
+      { id: 'career_wealth', labelEn: 'Vocation, Authority & Wealth Consensus', labelVi: 'Đồng Thuận Sự Nghiệp, Quyền Uy & Tài Bạch' },
+      { id: 'intellect_innovation', labelEn: 'Cognitive Architecture & First Principles', labelVi: 'Trí Tuệ Sáng Tạo & Nguyên Lý Cốt Lõi' },
+      { id: 'partnership_relationships', labelEn: 'Relational Contracts & Tension Points', labelVi: 'Hôn Nhân & Điểm Mâu Thuẫn Tình Duyên' },
+      { id: 'vitality_pacing', labelEn: 'Somatic Vitality & Energetic Rhythm', labelVi: 'Sức Khỏe Thể Chất & Nhịp Điệu Năng Lượng' }
     ],
     tuvi: [
-      { id: 'all', labelEn: 'Full 12 Palaces Matrix', labelVi: 'Toàn Diện Thập Nhị Cung Tử Vi' },
-      { id: 'menh_than', labelEn: 'Life & Body Palaces (Mệnh & Thân)', labelVi: 'Cung Mệnh & Cung Thân' },
-      { id: 'career_wealth', labelEn: 'Career & Wealth (Quan Lộc & Tài Bạch)', labelVi: 'Cung Quan Lộc & Tài Bạch' },
-      { id: 'marriage', labelEn: 'Spouse & Partnership (Phu Thê)', labelVi: 'Cung Phu Thê & Vận Tình Duyên' },
-      { id: 'luck_cycles', labelEn: '10-Year Major Luck Cycles (Đại Hạn)', labelVi: 'Chu Kỳ Đại Hạn 10 Năm' }
+      { id: 'all', labelEn: 'Full 12 Palaces Matrix Overview', labelVi: 'Toàn Bộ Thập Nhị Cung Tinh Bàn' },
+      { id: 'menh_than', labelEn: 'Life & Body Palaces (Mệnh & Thân)', labelVi: 'Cung Mệnh & Cung Thân (Bản Thể Cốt Lõi)' },
+      { id: 'career_quan', labelEn: 'Career Palace & Command Stars (Quan Lộc)', labelVi: 'Cung Quan Lộc & Các Sao Quyền Tinh' },
+      { id: 'wealth_tai', labelEn: 'Wealth Palace & Cash Flow (Tài Bạch)', labelVi: 'Cung Tài Bạch & Kho Tàng Tài Lộc' },
+      { id: 'spouse_phu', labelEn: 'Spouse & Marriage Contracts (Phu Thê)', labelVi: 'Cung Phu Thê & Duyên Nợ Phối Ngẫu' },
+      { id: 'mind_phuc', labelEn: 'Ancestral Mind & Spirit (Phúc Đức)', labelVi: 'Cung Phúc Đức & Tâm Thức Di Sản' },
+      { id: 'decadal_cycles', labelEn: '10-Year Major Luck Cycles (Đại Hạn)', labelVi: 'Vận Trình 10 Năm Đại Hạn & Tiểu Hạn' }
     ],
     astro: [
-      { id: 'all', labelEn: 'Planetary Wheel & Big Three', labelVi: 'Bản Đồ Sao & Bộ Ba Big Three' },
-      { id: 'big_three', labelEn: 'Sun, Moon, Ascendant Dynamics', labelVi: 'Mặt Trời, Mặt Trăng & Cung Mọc' },
-      { id: 'aspects', labelEn: 'Geometric Aspects & Orbs Matrix', labelVi: 'Mạng Lưới Góc Chiếu Hình Học' },
-      { id: 'midheaven', labelEn: 'Midheaven (MC) & Vocational Zenith', labelVi: 'Thiên Đỉnh (MC) & Đỉnh Cao Vận Mệnh' },
-      { id: 'houses', labelEn: '12 Placidus House Cusps', labelVi: 'Phân Tích 12 Cung Địa Bàn (Placidus)' }
+      { id: 'all', labelEn: 'Full Astrodienst Wheel & Big Three', labelVi: 'Bản Đồ Sao Tây Phương & The Big Three' },
+      { id: 'big_three', labelEn: 'Sun, Moon, Ascendant Core Dynamics', labelVi: 'Mặt Trời, Mặt Trăng & Cung Mọc (AC)' },
+      { id: 'midheaven_zenith', labelEn: 'Midheaven (MC) & 10th House Vocation', labelVi: 'Thiên Đỉnh (MC) & Vị Thế Công Chúng' },
+      { id: 'aspects_matrix', labelEn: 'Geometric Aspects & Orbs Matrix', labelVi: 'Mạng Lưới Góc Chiếu Hình Học (Aspects)' },
+      { id: 'houses_cusps', labelEn: '12 Placidus House Cusps Breakdown', labelVi: 'Phân Tích 12 Cung Địa Bàn Placidus' },
+      { id: 'retrogrades', labelEn: 'Planetary Speeds & Retrogrades (℞)', labelVi: 'Hành Tinh Nghịch Hành & Tốc Độ Quỹ Đạo' }
     ],
     bazi: [
-      { id: 'all', labelEn: 'Four Pillars & Elemental Flow', labelVi: 'Bát Tự Tứ Trụ & Dòng Chảy Ngũ Hành' },
-      { id: 'day_master', labelEn: 'Day Master (Nhật Chủ) & Polarity', labelVi: 'Nhật Chủ & Khí Phách Bản Thể' },
-      { id: 'elements_balance', labelEn: 'Five Elements Weighting (Ngũ Hành)', labelVi: 'Tỷ Lệ Phân Bổ Ngũ Hành & Dụng Thần' },
-      { id: 'ten_gods', labelEn: 'Classical Ten Gods (Thập Thần)', labelVi: 'Thập Thần & Cơ Cấu Quyền Lực/Tài Lộc' }
+      { id: 'all', labelEn: 'Four Pillars & Elemental Dynamic Balance', labelVi: 'Bát Tự Tứ Trụ & Dòng Chảy Ngũ Hành' },
+      { id: 'day_master', labelEn: 'Day Master (Nhật Chủ) Strength & Root', labelVi: 'Nhật Chủ, Can Chi & Thấu Can' },
+      { id: 'elements_flow', labelEn: 'Five Elements Weighting (Ngũ Hành Khuyết/Vượng)', labelVi: 'Cân Bằng Ngũ Hành & Tỷ Lệ Sinh Khắc' },
+      { id: 'ten_gods', labelEn: 'Classical Ten Gods (Thập Thần Cấu Trúc)', labelVi: 'Thập Thần (Ấn, Thực, Tài, Quan)' },
+      { id: 'favorable_god', labelEn: 'Useful God (Dụng Thần & Hỷ Thần)', labelVi: 'Tìm Dụng Thần & Hỷ Thần Cải Vận' }
     ],
     numerology: [
-      { id: 'all', labelEn: 'Life Path Dual Linage & Expression', labelVi: 'Đường Đời Song Song & Con Số Biểu Đạt' },
-      { id: 'master_vs_reduced', labelEn: 'Master Preservation vs Period Reduction', labelVi: 'Đối Chiếu Master 33/22/11 vs Rút Gọn' }
+      { id: 'all', labelEn: 'Life Path Dual Lineage & Core Numbers', labelVi: 'Đường Đời Song Song & Các Con Số Cốt Lõi' },
+      { id: 'master_reduction', labelEn: 'Master Number 11/22/33 vs Period Reduction', labelVi: 'Đối Chiếu Bảo Tồn Master vs Rút Gọn Chu Kỳ' },
+      { id: 'expression_soul', labelEn: 'Expression & Soul Urge Numbers', labelVi: 'Chỉ Số Sứ Mệnh & Khao Khát Linh Hồn' },
+      { id: 'personal_years', labelEn: 'Pinnacles, Challenges & Personal Year Cycles', labelVi: '4 Đỉnh Cao Cuộc Đời & Năm Cá Nhân' }
     ]
   };
+
+  const timeHorizons = [
+    { id: 'whole_life', labelEn: 'Entire Lifetime Continuum (Toàn Bộ Cuộc Đời)', labelVi: 'Toàn Bộ Dòng Đời (Tổng Quan)' },
+    { id: 'youth', labelEn: 'Foundational Years (0 – 25 years old)', labelVi: 'Tiền Vận / Giai Đoạn Đầu (0 – 25 tuổi)' },
+    { id: 'middle_age', labelEn: 'Peak Manifestation (26 – 50 years old)', labelVi: 'Trung Vận / Đỉnh Cao Sự Nghiệp (26 – 50 tuổi)' },
+    { id: 'senior', labelEn: 'Legacy & Harvest (51+ years old)', labelVi: 'Hậu Vận / An Hưởng & Di Sản (51+ tuổi)' },
+    { id: 'current_decade', labelEn: 'Active 10-Year Epoch / Major Luck Cycle', labelVi: 'Đại Hạn 10 Năm Hiện Tại' },
+    { id: 'upcoming_year', labelEn: 'Immediate Annual Window (Năm Trước Mắt)', labelVi: 'Tiểu Hạn / Vận Trình Năm Tới' }
+  ] as const;
 
   const models = [
     { id: 'openai/gpt-oss-120b', label: 'GPT-OSS 120B (Deep CoT Reasoning - Recommended)' },
@@ -211,7 +249,8 @@ export const AiReasoningStudio: React.FC<AiReasoningStudioProps> = ({
       method: selectedMethod,
       aspect: selectedAspect,
       model: selectedModel,
-      aiLang: aiLang
+      aiLang: aiLang,
+      timeHorizon: timeHorizon
     });
   };
 
@@ -222,15 +261,15 @@ export const AiReasoningStudio: React.FC<AiReasoningStudioProps> = ({
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
             <span className="status-chip confirmed">Groq LPU CoT Studio</span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>Cross-Tradition Synthesis Engine</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>Cross-Tradition Synthesis & Time-Series Engine</span>
           </div>
           <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.65rem', color: 'var(--moon-ivory)', marginTop: '0.4rem' }}>
             {isVietnamese ? 'Phòng Nghiên Cứu Suy Luận AI & Hợp Nhất Đa Hệ Thống' : 'Multi-Tradition AI Reasoning & Convergence Studio'}
           </h3>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
             {isVietnamese
-              ? `Khám phá chi tiết từng phương pháp hoặc hợp nhất dữ liệu từ nhiều trường phái cho ${subjectName} (${birthDateStr} • ${locationName}).`
-              : `Deep Chain-of-Thought reasoning for individual canons or integrated cross-system convergence for ${subjectName}.`}
+              ? `Đối sánh đa môn phái theo chuỗi thời gian dòng đời (Time Series) cho ${subjectName} (${birthDateStr} • ${locationName}).`
+              : `Deep Chain-of-Thought cross-examination across life stages and canonical aspects for ${subjectName}.`}
           </p>
         </div>
 
@@ -246,7 +285,7 @@ export const AiReasoningStudio: React.FC<AiReasoningStudioProps> = ({
         </button>
       </div>
 
-      {/* Control Grid: Method, Model, Language, and Aspect */}
+      {/* Control Grid: Method, Aspect, Time-Series Horizon, Model, and Language */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
         {/* Control 1: Method Selector */}
         <div>
@@ -263,7 +302,7 @@ export const AiReasoningStudio: React.FC<AiReasoningStudioProps> = ({
             className="select-editorial"
             style={{ width: '100%' }}
           >
-            <option value="unified">🌌 Hợp Nhất Đa Môn Phái (Convergence Matrix)</option>
+            <option value="unified">🌌 Hợp Nhất Đa Môn Phái (Convergence Matrix - ≥2 methods)</option>
             <option value="tuvi">☯ Tử Vi Đẩu Số 12 Cung (Song Dynasty Matrix)</option>
             <option value="astro">🪐 Chiêm Tinh Tây Phương (Swiss Ephemeris Wheel)</option>
             <option value="bazi">🎋 Bát Tự Tứ Trụ (Solar Terms & Ten Gods)</option>
@@ -290,10 +329,29 @@ export const AiReasoningStudio: React.FC<AiReasoningStudioProps> = ({
           </select>
         </div>
 
-        {/* Control 3: Model Selector */}
+        {/* Control 3: Time-Series Horizon */}
         <div>
           <label className="form-label" style={{ fontSize: '0.72rem' }}>
-            {isVietnamese ? '3. Chọn Mô Hình LLM' : '3. Choose Reasoning Model'}
+            {isVietnamese ? '3. Chu Kỳ Dòng Đời (Time Series)' : '3. Life Stage / Time Series Horizon'}
+          </label>
+          <select
+            value={timeHorizon}
+            onChange={(e) => setTimeHorizon(e.target.value as any)}
+            className="select-editorial"
+            style={{ width: '100%' }}
+          >
+            {timeHorizons.map(th => (
+              <option key={th.id} value={th.id}>
+                {isVietnamese ? th.labelVi : th.labelEn}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Control 4: Model Selector */}
+        <div>
+          <label className="form-label" style={{ fontSize: '0.72rem' }}>
+            {isVietnamese ? '4. Chọn Mô Hình LLM' : '4. Choose Reasoning Model'}
           </label>
           <select
             value={selectedModel}
@@ -307,10 +365,10 @@ export const AiReasoningStudio: React.FC<AiReasoningStudioProps> = ({
           </select>
         </div>
 
-        {/* Control 4: AI Language */}
+        {/* Control 5: AI Language */}
         <div>
           <label className="form-label" style={{ fontSize: '0.72rem' }}>
-            {isVietnamese ? '4. Ngôn Ngữ Phản Hồi AI' : '4. AI Output Language'}
+            {isVietnamese ? '5. Ngôn Ngữ Phản Hồi AI' : '5. AI Output Language'}
           </label>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button
@@ -350,8 +408,8 @@ export const AiReasoningStudio: React.FC<AiReasoningStudioProps> = ({
           <span>⚠</span>
           <span>
             {isVietnamese
-              ? 'Tính năng Hợp Nhất Đa Hệ Thống đòi hỏi kết quả từ ít nhất 2 môn phái trở lên để đối chiếu mức độ đồng thuận/mâu thuẫn. Vui lòng bật thêm phương pháp hoặc chọn luận giải riêng lẻ theo từng trường phái.'
-              : 'Multi-Tradition Convergence requires results from at least 2 methods to compute cross-system agreement and divergence. Enable additional traditions or select a specific individual method above.'}
+              ? `Hiện tại bạn đang bật ${activeMethodsCount} môn phái. Tính năng Hợp Nhất Đa Hệ Thống yêu cầu kết quả từ ít nhất 2 môn phái trở lên để đối chiếu mức độ đồng thuận/mâu thuẫn. Vui lòng bật thêm phương pháp ở góc trên hoặc chọn luận giải riêng lẻ theo từng trường phái.`
+              : `Currently only ${activeMethodsCount} method is active. Multi-Tradition Convergence requires at least 2 active methods to compute cross-system agreement and divergence. Enable additional traditions above or select a single canon to deep-dive.`}
           </span>
         </div>
       )}
@@ -388,8 +446,8 @@ export const AiReasoningStudio: React.FC<AiReasoningStudioProps> = ({
           </h4>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', maxWidth: '640px', margin: '0 auto', lineHeight: 1.6 }}>
             {isVietnamese
-              ? 'Chọn phương pháp, khía cạnh trọng tâm, mô hình LLM và ngôn ngữ bạn mong muốn ở trên, sau đó nhấn "Khởi Chạy Suy Luận" để nhận bản luận giải chuyên sâu với bảng đối sánh Markdown hoàn chỉnh.'
-              : 'Configure your method, specific aspect, LLM model, and response language above, then tap "Run Deep Reasoning" to stream comprehensive Chain-of-Thought synthesis with fully styled Markdown tables.'}
+              ? 'Chọn phương pháp, khía cạnh trọng tâm, chu kỳ thời gian (Time Series), mô hình LLM và ngôn ngữ bạn mong muốn ở trên, sau đó nhấn "Khởi Chạy Suy Luận" để nhận bản luận giải chuyên sâu với công thức toán học KaTeX và bảng đối sánh Markdown hoàn chỉnh.'
+              : 'Configure your method, specific aspect, life stage time-series, LLM model, and response language above, then tap "Run Deep Reasoning" to stream comprehensive Chain-of-Thought synthesis with KaTeX-rendered mathematics and styled comparison tables.'}
           </p>
         </div>
       )}

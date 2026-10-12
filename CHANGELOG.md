@@ -4,6 +4,22 @@ All component updates, bug fixes, and design system refinements are tracked belo
 
 ---
 
+### [2026-10-12 16:52:29 UTC] [FEAT] KaTeX mathematical rendering ($ and 3080702), Time-Series life horizon selector, and cross-tradition data integration
+
+- **Context & Problem:**
+  Resolved broken mathematical rendering by integrating KaTeX rendering engine for inline ($...$) and block (3080702...3080702) formulas (including multi-number additions and Life Path reductions). Enriched AI Reasoning Studio with a dedicated Time-Series selector (Entire Life, Youth 0-25, Middle Age 26-50, Senior 51+, Current Decade, Upcoming Year). Fed rich multi-system context data (Tu Vi 12 palaces, Western Big Three & aspects, BaZi Four Pillars, Numerology dual equations) directly to the prompt.
+- **Files Modified:**
+  - `components/report/AiReasoningStudio.tsx`
+  - `app/explore/page.tsx`
+  - `app/layout.tsx`
+  - `package.json`
+- **Verification Evidence:**
+  node test verified KaTeX produces valid mathml and visual spans. npm run build passed generating all 15 static HTML routes without error.
+- **Engineering Insights & Risk Mitigation:**
+  Mathematical equations in numerology and ephemeris calculations must be parsed before generic HTML character escapes to prevent KaTeX syntax breakage.
+
+---
+
 ### [2026-10-12 16:42:01 UTC] [REFACTOR] Reordered AiReasoningStudio below calculation lab, added model & language selectors, aspect drill-down, and markdown table rendering
 
 - **Context & Problem:**
