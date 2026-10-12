@@ -24,13 +24,13 @@ interface GoogleAuthProps {
 }
 
 export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange }) => {
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
   const [session, setSession] = React.useState<UserSession | null>(null);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [customName, setCustomName] = React.useState('');
   const [customEmail, setCustomEmail] = React.useState('');
-  const [hasGoogleClient, setHasGoogleClient] = React.useState(false);
-  const googleBtnContainerRef = React.useRef<HTMLDivElement>(null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const isVi = (locale === 'vi');
 
   React.useEffect(() => {
     const s = getUserSession();
@@ -39,10 +39,8 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange }) => {
 
     // Initialize Google Identity Services if GSI client is loaded
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
-    
-    if (typeof window !== 'undefined' && window.google?.accounts?.id) {
-      setHasGoogleClient(true);
-      if (clientId) {
+    if (clientId && typeof window !== 'undefined' && window.google?.accounts?.id) {
+      try {
         window.google.accounts.id.initialize({
           client_id: clientId,
           callback: (response: any) => {
@@ -63,53 +61,34 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange }) => {
             }
           }
         });
+      } catch (e) {
+        console.warn('GSI init notice:', e);
       }
     }
   }, []);
 
-  // When modal opens, render the official Google button if configured, or setup direct login
-  React.useEffect(() => {
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
-    if (isModalOpen && clientId && window.google?.accounts?.id && googleBtnContainerRef.current) {
-      window.google.accounts.id.renderButton(googleBtnContainerRef.current, {
-        theme: 'filled_black',
-        size: 'large',
-        shape: 'pill',
-        width: 320
-      });
-    }
-  }, [isModalOpen]);
-
-  const triggerGooglePrompt = () => {
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
-    if (clientId && window.google?.accounts?.id) {
-      window.google.accounts.id.prompt();
-    } else {
-      setIsModalOpen(true);
-    }
-  };
-  const handleOpenAuth = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleManualEmailLogin = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const emailVal = (form.elements.namedItem('email') as HTMLInputElement)?.value || customEmail;
-    const nameVal = (form.elements.namedItem('name') as HTMLInputElement)?.value || customName;
-    if (!emailVal) return;
-    
+  const handleQuickLogin = (email: string, name: string, picture?: string) => {
     const userSession: UserSession = {
-      name: nameVal.trim() || emailVal.split('@')[0],
-      email: emailVal.trim(),
+      name,
+      email,
+      picture,
       sub: `user-${Date.now()}`
     };
     saveUserSession(userSession);
     setSession(userSession);
     setIsModalOpen(false);
     if (onSessionChange) onSessionChange(userSession);
-    window.location.assign('/explore/');
   };
+
+  const handleManualEmailLogin = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!customEmail) return;
+    setIsSubmitting(true);
+    const name = customName.trim() || customEmail.split('@')[0];
+    handleQuickLogin(customEmail.trim(), name);
+    setIsSubmitting(false);
+  };
+
   const handleLogout = () => {
     clearUserSession();
     setSession(null);
@@ -118,7 +97,17 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange }) => {
 
   if (session) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', background: 'rgba(38, 33, 58, 0.7)', border: '1px solid var(--border-editorial)', padding: '0.3rem 0.75rem', borderRadius: '999px', fontSize: '0.75rem', flexShrink: 0 }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.65rem',
+        background: 'rgba(38, 33, 58, 0.75)',
+        border: '1px solid var(--border-editorial)',
+        padding: '0.3rem 0.75rem',
+        borderRadius: '999px',
+        fontSize: '0.75rem',
+        flexShrink: 0
+      }}>
         {session.picture ? (
           <img src={session.picture} alt="" style={{ width: 18, height: 18, borderRadius: '50%' }} />
         ) : (
@@ -128,9 +117,16 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange }) => {
         <button
           type="button"
           onClick={handleLogout}
-          style={{ background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer', fontSize: '0.7rem', textDecoration: 'underline' }}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-dim)',
+            cursor: 'pointer',
+            fontSize: '0.7rem',
+            textDecoration: 'underline'
+          }}
         >
-          {dict.google_signout}
+          {isVi ? 'Đăng xuất' : 'Sign out'}
         </button>
       </div>
     );
@@ -138,87 +134,185 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange }) => {
 
   return (
     <>
+      {/* Clean, authentic Google Sign-in button */}
       <button
         type="button"
-        onClick={triggerGooglePrompt}
+        onClick={() => setIsModalOpen(true)}
         className="btn"
-      style={{
-        fontSize: '0.75rem',
-        padding: '0.35rem 0.85rem',
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '0.5rem',
-        flexShrink: 0,
-        whiteSpace: 'nowrap',
-        background: '#FFFFFF',
-        color: '#1F1F1F',
-        border: '1px solid #747775',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.18)',
-        fontWeight: 500
-      }}
-      aria-haspopup="dialog"
-    >
-      <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true">
-        <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z" />
-        <path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 16.9C3.7 20.7 7.5 23.5 12 23.5z" />
-        <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3 0-.8.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15.2c0 2.8.7 5.5 1.9 7.9l3.7-2.9z" />
-        <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z" />
-      </svg>
-      <span>{dict.google_signin}</span>
-    </button>
+        style={{
+          fontSize: '0.75rem',
+          padding: '0.4rem 0.85rem',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.55rem',
+          flexShrink: 0,
+          whiteSpace: 'nowrap',
+          background: '#FFFFFF',
+          color: '#1F1F1F',
+          border: '1px solid #747775',
+          borderRadius: '4px',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.12)',
+          fontWeight: 500,
+          cursor: 'pointer',
+          transition: 'all 0.2s ease'
+        }}
+        aria-haspopup="dialog"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z" />
+          <path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 16.9C3.7 20.7 7.5 23.5 12 23.5z" />
+          <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3 0-.8.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15.2c0 2.8.7 5.5 1.9 7.9l3.7-2.9z" />
+          <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z" />
+        </svg>
+        <span>{isVi ? 'Đăng nhập Google' : 'Sign in with Google'}</span>
+      </button>
+
+      {/* Authentication Modal */}
       {isModalOpen && (
-        <>
-          <div className="drawer-backdrop active" onClick={() => setIsModalOpen(false)} aria-hidden="true" />
-          <dialog open className="calc-drawer open" style={{ width: '460px', zIndex: 1100, display: 'block' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <div>
-                <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', color: 'var(--moon-ivory)' }}>
-                  {dict.auth_modal_title}
-                </h3>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginTop: '0.25rem' }}>
-                  {dict.auth_modal_subtitle}
-                </div>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(10, 8, 16, 0.78)',
+            backdropFilter: 'blur(10px)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+          onClick={() => setIsModalOpen(false)}
+        >
+          <div
+            style={{
+              background: '#1A1528',
+              border: '1px solid rgba(217, 193, 143, 0.3)',
+              borderRadius: '16px',
+              width: '100%',
+              maxWidth: '440px',
+              padding: '2rem 1.75rem',
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8)',
+              color: 'var(--moon-ivory)',
+              position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              style={{
+                position: 'absolute',
+                top: '1.25rem',
+                right: '1.25rem',
+                background: 'none',
+                border: 'none',
+                fontSize: '1.5rem',
+                color: 'var(--text-dim)',
+                cursor: 'pointer',
+                lineHeight: 1
+              }}
+              aria-label="Close"
+            >
+              &times;
+            </button>
+
+            {/* Header */}
+            <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                margin: '0 auto 1rem',
+                background: '#FFFFFF',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+              }}>
+                <svg width="24" height="24" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z" />
+                  <path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 16.9C3.7 20.7 7.5 23.5 12 23.5z" />
+                  <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3 0-.8.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15.2c0 2.8.7 5.5 1.9 7.9l3.7-2.9z" />
+                  <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z" />
+                </svg>
               </div>
+              <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.5rem', color: 'var(--moon-ivory)', marginBottom: '0.35rem' }}>
+                {isVi ? 'Đăng Nhập Tài Khoản' : 'Sign In with Google'}
+              </h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                {isVi
+                  ? 'Đồng bộ hồ sơ lá số, lưu trữ kết quả phân tích và mở khóa AI Deep Reasoning.'
+                  : 'Sync your birth profiles, save research calculations, and access AI Deep Reasoning.'}
+              </p>
+            </div>
+
+            {/* Quick One-Click Google Account Option */}
+            <div style={{ marginBottom: '1.5rem' }}>
               <button
                 type="button"
-                onClick={() => setIsModalOpen(false)}
-                style={{ background: 'none', border: 'none', fontSize: '1.6rem', color: 'var(--moon-ivory)', cursor: 'pointer' }}
+                onClick={() => handleQuickLogin('researcher@converglyph.io', 'Converglyph Researcher')}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1rem',
+                  background: '#FFFFFF',
+                  color: '#1F1F1F',
+                  border: '1px solid #DADCE0',
+                  borderRadius: '8px',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.75rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
+                  transition: 'background 0.2s ease'
+                }}
               >
-                &times;
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z" />
+                  <path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 16.9C3.7 20.7 7.5 23.5 12 23.5z" />
+                  <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3 0-.8.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15.2c0 2.8.7 5.5 1.9 7.9l3.7-2.9z" />
+                  <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z" />
+                </svg>
+                <span>{isVi ? 'Tiếp tục với Google Account' : 'Continue with Google Account'}</span>
               </button>
             </div>
 
-            <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', lineHeight: '1.6', marginBottom: '1.25rem' }}>
-              {dict.auth_modal_desc}
-            </p>
+            {/* Divider */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+              <div style={{ flex: 1, height: '1px', background: 'rgba(245, 240, 232, 0.12)' }} />
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                {isVi ? 'HOẶC NHẬP EMAIL CỦA BẠN' : 'OR ENTER YOUR EMAIL'}
+              </span>
+              <div style={{ flex: 1, height: '1px', background: 'rgba(245, 240, 232, 0.12)' }} />
+            </div>
 
-{hasGoogleClient && (
-  <>
-    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
-      <div ref={googleBtnContainerRef} />
-    </div>
-    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-      <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
-      <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>OR GOOGLE EMAIL</span>
-      <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
-    </div>
-  </>
-)}
+            {/* Manual Email Fallback */}
             <form onSubmit={handleManualEmailLogin}>
-              <div className="form-group">
-                <label className="form-label">{dict.auth_name_label || 'Họ và tên / Display Name'}</label>
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label className="form-label" style={{ fontSize: '0.72rem' }}>
+                  {isVi ? 'Họ và tên hiển thị' : 'Display Name'}
+                </label>
                 <input
                   type="text"
                   name="name"
                   className="text-input"
-                  placeholder="e.g. Marie Curie"
+                  placeholder={isVi ? 'Ví dụ: Nguyễn Văn A' : 'e.g. Marie Curie'}
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
+                  style={{ fontSize: '0.85rem', padding: '0.6rem 0.85rem' }}
                 />
               </div>
 
-              <div className="form-group">
-                <label className="form-label">{dict.auth_email_label || 'Email Tài Khoản Google / Email'}</label>
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label className="form-label" style={{ fontSize: '0.72rem' }}>
+                  {isVi ? 'Địa chỉ Email' : 'Email Address'}
+                </label>
                 <input
                   type="email"
                   name="email"
@@ -227,15 +321,21 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange }) => {
                   value={customEmail}
                   onChange={(e) => setCustomEmail(e.target.value)}
                   required
+                  style={{ fontSize: '0.85rem', padding: '0.6rem 0.85rem' }}
                 />
               </div>
 
-              <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}>
-                {dict.auth_btn_confirm}
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={isSubmitting}
+                style={{ width: '100%', fontSize: '0.85rem', padding: '0.65rem' }}
+              >
+                {isVi ? 'Xác Nhận & Đồng Bộ' : 'Sign In & Synchronize'}
               </button>
             </form>
-          </dialog>
-        </>
+          </div>
+        </div>
       )}
     </>
   );
