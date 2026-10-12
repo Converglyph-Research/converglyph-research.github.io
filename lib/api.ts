@@ -77,6 +77,23 @@ export async function fetchAiHistoryApi(subjectName?: string, method?: string, a
   } catch {}
   return [];
 }
+
+export async function deleteProfileApi(id: number | string): Promise<boolean> {
+  try {
+    const resp = await fetch(`${API_BASE}/api/profile/delete/${id}`);
+    return resp.ok;
+  } catch {}
+  return false;
+}
+
+export async function deleteAiHistoryApi(id: number | string): Promise<boolean> {
+  try {
+    const resp = await fetch(`${API_BASE}/api/ai/history/delete/${id}`);
+    return resp.ok;
+  } catch {}
+  return false;
+}
+
 export async function fetchCompareApi(profile: BirthProfile, lang: 'en' | 'vi'): Promise<unknown> {
   const resp = await fetch(`${API_BASE}/api/compare`, {
     method: 'POST',

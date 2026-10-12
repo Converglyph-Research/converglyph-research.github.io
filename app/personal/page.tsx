@@ -182,10 +182,18 @@ export default function PersonalSpacePage() {
                     <button
                       type="button"
                       className="btn btn-outline"
-                      onClick={handleClearProfile}
-                      style={{ fontSize: '0.8rem' }}
+                      onClick={async () => {
+                        if (window.confirm(isVi ? 'Bạn có chắc chắn muốn xóa bản ghi lá số này khỏi trình duyệt và cơ sở dữ liệu?' : 'Delete this chart record from browser and database?')) {
+                          const { deleteProfileApi } = await import('@/lib/api');
+                          if (customProfile.id) {
+                            await deleteProfileApi(customProfile.id);
+                          }
+                          handleClearProfile();
+                        }
+                      }}
+                      style={{ fontSize: '0.8rem', color: 'var(--rose-accent)', borderColor: 'rgba(244,63,94,0.4)' }}
                     >
-                      {isVi ? 'Xóa Lá Số' : 'Clear Chart'}
+                      🗑 {isVi ? 'Xóa Bản Ghi' : 'Delete Record'}
                     </button>
                   </div>
                 </div>

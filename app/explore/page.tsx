@@ -361,6 +361,11 @@ REQUIREMENTS:
       model: model || "openai/gpt-oss-120b",
       systemPrompt: sysPrompt,
       userPrompt,
+      subjectName: name,
+      method,
+      aspect,
+      aiLang,
+      timeHorizon,
       tier: "pro",
       allowedTraditions: allowed,
       context: {

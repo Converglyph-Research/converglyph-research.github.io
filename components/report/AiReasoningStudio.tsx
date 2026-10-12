@@ -569,9 +569,33 @@ export const AiReasoningStudio: React.FC<AiReasoningStudioProps> = ({
                         <span className="status-chip confirmed" style={{ fontSize: '0.7rem' }}>{item.method?.toUpperCase()}</span>
                         <strong style={{ fontSize: '0.85rem', color: 'var(--moon-ivory)' }}>{item.aspect}</strong>
                       </div>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
-                        {item.created_at} • {item.model}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                          {item.created_at} • {item.model}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (window.confirm(isVietnamese ? 'Bạn có muốn xóa bản ghi luận giải này?' : 'Do you want to delete this reasoning record?')) {
+                              const { deleteAiHistoryApi } = await import('@/lib/api');
+                              await deleteAiHistoryApi(item.id);
+                              setHistoryItems(prev => prev.filter(h => h.id !== item.id));
+                            }
+                          }}
+                          style={{
+                            background: 'none',
+                            border: '1px solid rgba(244, 63, 94, 0.35)',
+                            color: 'var(--rose-accent)',
+                            padding: '0.15rem 0.5rem',
+                            borderRadius: '4px',
+                            fontSize: '0.7rem',
+                            cursor: 'pointer'
+                          }}
+                          title={isVietnamese ? 'Xóa bản ghi' : 'Delete record'}
+                        >
+                          🗑 {isVietnamese ? 'Xóa' : 'Delete'}
+                        </button>
+                      </div>
                     </div>
 
                     <div

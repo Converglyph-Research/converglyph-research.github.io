@@ -7,6 +7,11 @@ export interface AiStreamOptions {
   model?: string;
   systemPrompt: string;
   userPrompt: string;
+  subjectName?: string;
+  method?: string;
+  aspect?: string;
+  aiLang?: string;
+  timeHorizon?: string;
   tier?: string;
   allowedTraditions?: string[];
   context?: Record<string, any>;
@@ -18,6 +23,11 @@ export async function streamAiReasoning({
   model = "openai/gpt-oss-120b",
   systemPrompt,
   userPrompt,
+  subjectName = "Subject Profile",
+  method = "unified",
+  aspect = "all",
+  aiLang = "vi",
+  timeHorizon = "whole_life",
   tier = "pro",
   allowedTraditions = ["western", "tuvi", "bazi", "numerology"],
   context = {},
@@ -39,6 +49,11 @@ export async function streamAiReasoning({
         model,
         systemPrompt,
         userPrompt,
+        subject_name: subjectName,
+        method,
+        aspect,
+        ai_lang: aiLang,
+        time_horizon: timeHorizon,
         tier,
         allowed_traditions: allowedTraditions,
         context

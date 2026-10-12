@@ -4,6 +4,23 @@ All component updates, bug fixes, and design system refinements are tracked belo
 
 ---
 
+### [2026-10-12 18:40:03 UTC] [FEAT] System diagnostic file logging, AI reasoning auto-persistence, and deletion controls
+
+- **Context & Problem:**
+  Added log_system_event() writing structured JSON logs to logs/system.log for bug investigation. Wired subjectName, method, aspect, aiLang, and timeHorizon from explore page into streamAiReasoning, ensuring reasoning runs are auto-saved into SQLite ai_reasoning_logs. Added DELETE endpoints on backend (/api/ai/history/delete/:id and /api/profile/delete/:id), and added interactive delete buttons in both the Reasoning Archive modal and the Personal Space chart manager.
+- **Files Modified:**
+  - `server.py`
+  - `lib/ai.ts`
+  - `lib/api.ts`
+  - `components/report/AiReasoningStudio.tsx`
+  - `app/personal/page.tsx`
+- **Verification Evidence:**
+  TypeScript compiled cleanly. Verified /api/logs, /api/ai/history, and delete endpoints.
+- **Engineering Insights & Risk Mitigation:**
+  Storing system diagnostics in an append-only JSONL log allows rapid bug diagnosis on headless servers while deletion controls empower users with full GDPR data sovereignty.
+
+---
+
 ### [2026-10-12 18:32:06 UTC] [FEAT] Reasoning Archive modal dialog and SQLite persistence for all AI inference categories
 
 - **Context & Problem:**
