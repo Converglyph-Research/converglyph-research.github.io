@@ -4,6 +4,20 @@ All component updates, bug fixes, and design system refinements are tracked belo
 
 ---
 
+### [2026-10-12 16:24:08 UTC] [FEAT] Live global typeahead location search and real reverse geocoding (City, Country)
+
+- **Context & Problem:**
+  Implemented Open-Meteo Geocoding API integration coupled with BigDataCloud and local regex database. Users get live typeahead suggestions showing 'City, Admin Region, Country' with exact 4-decimal lat/lon. Browser GPS button now reverse geocodes exact coordinates into real city/country strings.
+- **Files Modified:**
+  - `components/report/ProfileForm.tsx`
+  - `lib/validation.ts`
+- **Verification Evidence:**
+  npm run build passed generating all 15 static HTML pages without syntax or type errors.
+- **Engineering Insights & Risk Mitigation:**
+  Using debounced live geocoding with instant offline regex fallback ensures high-quality coordinate resolution for any location globally while avoiding network failure blockage.
+
+---
+
 ### [2026-10-12 16:15:03 UTC] [FEAT] Modernized ProfileForm UI/UX with native date/time pickers and Geolocation API
 
 - **Context & Problem:**

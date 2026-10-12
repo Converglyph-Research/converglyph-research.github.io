@@ -2,7 +2,13 @@
 
 import React from 'react';
 import { BirthProfile } from '@/lib/types';
-import { isValidGregorianDate, isValidCoordinates, resolveCityCoordinates } from '@/lib/validation';
+import {
+  isValidGregorianDate,
+  isValidCoordinates,
+  searchGlobalLocations,
+  reverseGeocodeCoords,
+  GeoLocationResult
+} from '@/lib/validation';
 
 interface ProfileFormProps {
   isOpen: boolean;
@@ -18,67 +24,101 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   isVietnamese
 }) => {
   const [name, setName] = React.useState('');
-  // Use HTML5 date input format YYYY-MM-DD
   const [birthDate, setBirthDate] = React.useState('1990-01-01');
   const [isTimeUnknown, setIsTimeUnknown] = React.useState(false);
   const [birthTime, setBirthTime] = React.useState('12:00');
   const [locationName, setLocationName] = React.useState('');
-  const [latitude, setLatitude] = React.useState('21.03');
-  const [longitude, setLongitude] = React.useState('105.85');
+  const [latitude, setLatitude] = React.useState('21.0285');
+  const [longitude, setLongitude] = React.useState('105.8542');
   const [useLmt, setUseLmt] = React.useState(false);
+
+  // Typeahead suggestions & Geolocation state
+  const [suggestions, setSuggestions] = React.useState<GeoLocationResult[]>([]);
+  const [isSearching, setIsSearching] = React.useState(false);
+  const [showSuggestions, setShowSuggestions] = React.useState(false);
   const [geoLoading, setGeoLoading] = React.useState(false);
   const [geoNotice, setGeoNotice] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+
+  const searchDebounceRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const loadDemoEinstein = () => {
     setName('Albert Einstein');
     setBirthDate('1879-03-14');
     setIsTimeUnknown(false);
     setBirthTime('11:30');
-    setLocationName('Ulm, Germany');
-    setLatitude('48.40');
-    setLongitude('9.99');
+    setLocationName('Ulm, Baden-Württemberg, Germany');
+    setLatitude('48.4011');
+    setLongitude('9.9876');
     setUseLmt(true);
     setErrorMsg(null);
-    setGeoNotice(null);
+    setGeoNotice(isVietnamese ? '✓ Đã nạp tọa độ: Ulm, Đức (48.4011°N, 9.9876°E)' : '✓ Preset loaded: Ulm, Germany (48.4011°N, 9.9876°E)');
+    setShowSuggestions(false);
   };
 
-  const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Debounced Typeahead location search
+  const handleLocationInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setLocationName(val);
-    const resolved = resolveCityCoordinates(val);
-    if (resolved) {
-      setLatitude(resolved.lat.toFixed(4));
-      setLongitude(resolved.lon.toFixed(4));
-      setGeoNotice(isVietnamese ? `✓ Tự động định vị: ${resolved.lat.toFixed(2)}°N, ${resolved.lon.toFixed(2)}°E` : `✓ Matched city: ${resolved.lat.toFixed(2)}°, ${resolved.lon.toFixed(2)}°`);
+    setShowSuggestions(true);
+    clearTimeout(searchDebounceRef.current as NodeJS.Timeout);
+    if (val.trim().length >= 2) {
+      setIsSearching(true);
+      searchDebounceRef.current = setTimeout(async () => {
+        try {
+          const results = await searchGlobalLocations(val);
+          setSuggestions(results);
+        } catch {
+          setSuggestions([]);
+        } finally {
+          setIsSearching(false);
+        }
+      }, 250);
+    } else {
+      setSuggestions([]);
+      setIsSearching(false);
     }
   };
 
-  // Browser Geolocation API for Current Location
+  const handleSelectLocation = (loc: GeoLocationResult) => {
+    setLocationName(loc.displayName);
+    setLatitude(loc.latitude.toFixed(4));
+    setLongitude(loc.longitude.toFixed(4));
+    setShowSuggestions(false);
+    setGeoNotice(isVietnamese ? `✓ Tọa độ chuẩn xác: ${loc.displayName} (${loc.latitude}°, ${loc.longitude}°)` : `✓ Exact coordinates: ${loc.displayName} (${loc.latitude}°, ${loc.longitude}°)`);
+  };
+
+  // Browser Geolocation with Real Reverse Geocoding
   const handleGetCurrentLocation = () => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
       setGeoNotice(isVietnamese ? 'Trình duyệt không hỗ trợ Geolocation.' : 'Geolocation is not supported by your browser.');
       return;
     }
     setGeoLoading(true);
-    setGeoNotice(isVietnamese ? 'Đang lấy vị trí GPS...' : 'Requesting GPS coordinates...');
+    setGeoNotice(isVietnamese ? 'Đang kích hoạt GPS và tra cứu địa chỉ...' : 'Acquiring GPS and looking up city/country...');
 
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         const lat = pos.coords.latitude;
         const lon = pos.coords.longitude;
         setLatitude(lat.toFixed(4));
         setLongitude(lon.toFixed(4));
-        if (!locationName) {
-          setLocationName(isVietnamese ? 'Vị trí hiện tại của bạn' : 'Current Device Location');
+
+        try {
+          const resolvedName = await reverseGeocodeCoords(lat, lon);
+          setLocationName(resolvedName);
+          setGeoNotice(isVietnamese ? `✓ Vị trí GPS chuẩn xác: ${resolvedName} (${lat.toFixed(4)}°, ${lon.toFixed(4)}°)` : `✓ GPS location: ${resolvedName} (${lat.toFixed(4)}°, ${lon.toFixed(4)}°)`);
+        } catch {
+          setLocationName(isVietnamese ? 'Vị trí thiết bị hiện tại' : 'Current Device Location');
+          setGeoNotice(`✓ GPS: ${lat.toFixed(4)}°, ${lon.toFixed(4)}°`);
+        } finally {
+          setGeoLoading(false);
         }
-        setGeoLoading(false);
-        setGeoNotice(isVietnamese ? `✓ Đã lấy vị trí GPS: ${lat.toFixed(2)}°, ${lon.toFixed(2)}°` : `✓ GPS location acquired: ${lat.toFixed(2)}°, ${lon.toFixed(2)}°`);
       },
       (err) => {
         setGeoLoading(false);
-        setGeoNotice(isVietnamese ? `Không thể lấy vị trí: ${err.message}` : `Location request denied: ${err.message}`);
+        setGeoNotice(isVietnamese ? `Không thể lấy vị trí GPS: ${err.message}` : `Location request denied: ${err.message}`);
       },
       { timeout: 10000, enableHighAccuracy: true }
     );
@@ -88,7 +128,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     e.preventDefault();
     setErrorMsg(null);
 
-    // Parse date YYYY-MM-DD
     const dateParts = birthDate.split('-');
     if (dateParts.length !== 3) {
       setErrorMsg(isVietnamese ? 'Vui lòng chọn ngày sinh hợp lệ.' : 'Please enter a valid birth date.');
@@ -119,15 +158,8 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
       }
     }
 
-    let lat = parseFloat(latitude);
-    let lon = parseFloat(longitude);
-    if (isNaN(lat) || isNaN(lon)) {
-      const resolved = resolveCityCoordinates(locationName);
-      if (resolved) {
-        lat = resolved.lat;
-        lon = resolved.lon;
-      }
-    }
+    const lat = parseFloat(latitude);
+    const lon = parseFloat(longitude);
 
     if (!isValidCoordinates(lat, lon)) {
       setErrorMsg(isVietnamese ? 'Vui lòng nhập tọa độ hợp lệ (Vĩ độ -90 đến 90, Kinh độ -180 đến 180).' : 'Please enter valid coordinates (Latitude -90 to 90, Longitude -180 to 180).');
@@ -171,7 +203,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
         open
         className="calc-drawer open"
         id="calc-drawer"
-        style={{ width: '560px' }}
+        style={{ width: '580px' }}
         aria-labelledby="calc-drawer-title"
       >
         {/* Header */}
@@ -205,7 +237,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
             onClick={loadDemoEinstein}
             style={{ width: '100%', fontSize: '0.8rem', padding: '0.55rem' }}
           >
-            📋 {isVietnamese ? 'Nạp thông số mẫu: Albert Einstein (1879)' : 'Load Benchmark Preset: Albert Einstein (1879)'}
+            📋 {isVietnamese ? 'Nạp thông số mẫu: Albert Einstein (1879 - Ulm, Germany)' : 'Load Benchmark Preset: Albert Einstein (1879 - Ulm, Germany)'}
           </button>
         </div>
 
@@ -248,9 +280,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
               required
               style={{ fontSize: '0.95rem', padding: '0.65rem 1rem' }}
             />
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '0.3rem' }}>
-              {isVietnamese ? 'Định dạng chuẩn: Năm-Tháng-Ngày (YYYY-MM-DD)' : 'Standard ISO format: YYYY-MM-DD'}
-            </div>
           </div>
 
           {/* 3. Birth Time */}
@@ -289,11 +318,11 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
             )}
           </div>
 
-          {/* 4. Birth Location with Geo-Location button */}
-          <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+          {/* 4. Global Location Search with Real Typeahead & GPS */}
+          <div className="form-group" style={{ marginBottom: '1.5rem', position: 'relative' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
               <label className="form-label" htmlFor="form-loc" style={{ marginBottom: 0 }}>
-                {isVietnamese ? '4. Nơi Sinh & Tọa Độ Địa Lý' : '4. Birthplace & Geographical Coordinates'}
+                {isVietnamese ? '4. Nơi Sinh & Tọa Độ Toàn Cầu' : '4. Birthplace & Global Coordinates'}
               </label>
               <button
                 type="button"
@@ -301,27 +330,86 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                 disabled={geoLoading}
                 className="btn btn-outline"
                 style={{ fontSize: '0.72rem', padding: '0.2rem 0.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
-                title={isVietnamese ? 'Sử dụng GPS thiết bị hiện tại' : 'Acquire GPS coordinates from browser'}
+                title={isVietnamese ? 'Lấy vị trí GPS và tự động tra cứu thành phố/quốc gia' : 'Acquire GPS coordinates and look up city/country'}
               >
                 <span>📍</span>
-                <span>{geoLoading ? (isVietnamese ? 'Đang lấy GPS...' : 'Locating...') : (isVietnamese ? 'Lấy vị trí hiện tại' : 'Use Current Location')}</span>
+                <span>{geoLoading ? (isVietnamese ? 'Đang định vị...' : 'Locating...') : (isVietnamese ? 'Lấy vị trí hiện tại' : 'Use Current Location')}</span>
               </button>
             </div>
 
-            <input
-              type="text"
-              id="form-loc"
-              className="text-input"
-              placeholder={isVietnamese ? 'Nhập thành phố (VD: Hà Nội, Hồ Chí Minh, Paris, Tokyo...)' : 'Type city name (e.g. Paris, London, Tokyo, New York...)'}
-              value={locationName}
-              onChange={handleCityChange}
-              style={{ marginBottom: '0.6rem' }}
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                id="form-loc"
+                className="text-input"
+                placeholder={isVietnamese ? 'Gõ tên bất kỳ thành phố hoặc quốc gia (VD: Hà Nội, Paris, Tokyo...)' : 'Type any city, state, or country (e.g. London, Tokyo, New York...)'}
+                value={locationName}
+                onChange={handleLocationInputChange}
+                onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
+                style={{ marginBottom: '0.6rem' }}
+                autoComplete="off"
+              />
+              {isSearching && (
+                <div style={{ position: 'absolute', right: '12px', top: '10px', fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                  ⏳
+                </div>
+              )}
 
+              {/* Typeahead Dropdown List */}
+              {showSuggestions && suggestions.length > 0 && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    zIndex: 100,
+                    background: '#1F1A2D',
+                    border: '1px solid rgba(217, 193, 143, 0.4)',
+                    borderRadius: '8px',
+                    maxHeight: '220px',
+                    overflowY: 'auto',
+                    boxShadow: '0 12px 30px rgba(0,0,0,0.7)',
+                    marginTop: '-4px'
+                  }}
+                >
+                  {suggestions.map((loc, idx) => (
+                    <div
+                      key={`loc-${idx}`}
+                      onClick={() => handleSelectLocation(loc)}
+                      style={{
+                        padding: '0.65rem 0.95rem',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid rgba(245, 240, 232, 0.08)',
+                        fontSize: '0.825rem',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        transition: 'background 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(217, 193, 143, 0.15)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                    >
+                      <div>
+                        <strong style={{ color: 'var(--moon-ivory)' }}>{loc.name}</strong>
+                        <span style={{ color: 'var(--text-dim)', marginLeft: '0.4rem', fontSize: '0.75rem' }}>
+                          {[loc.admin1, loc.country].filter(Boolean).join(', ')}
+                        </span>
+                      </div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--celestial-gold)' }}>
+                        {loc.latitude.toFixed(2)}°, {loc.longitude.toFixed(2)}°
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Latitude and Longitude with Exact Precision */}
             <div className="form-row-2">
               <div>
                 <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', display: 'block', marginBottom: '0.2rem', fontFamily: 'var(--font-mono)' }}>
-                  {isVietnamese ? 'Vĩ độ (Latitude)' : 'Latitude (°N)'}
+                  {isVietnamese ? 'Vĩ độ chuẩn xác (Latitude °N)' : 'Exact Latitude (°N)'}
                 </label>
                 <input
                   type="number"
@@ -336,7 +424,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
               </div>
               <div>
                 <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', display: 'block', marginBottom: '0.2rem', fontFamily: 'var(--font-mono)' }}>
-                  {isVietnamese ? 'Kinh độ (Longitude)' : 'Longitude (°E)'}
+                  {isVietnamese ? 'Kinh độ chuẩn xác (Longitude °E)' : 'Exact Longitude (°E)'}
                 </label>
                 <input
                   type="number"
@@ -352,7 +440,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
             </div>
 
             {geoNotice && (
-              <div style={{ fontSize: '0.75rem', color: 'var(--celestial-gold)', marginTop: '0.45rem', fontFamily: 'var(--font-mono)' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--celestial-gold)', marginTop: '0.5rem', fontFamily: 'var(--font-mono)' }}>
                 {geoNotice}
               </div>
             )}
