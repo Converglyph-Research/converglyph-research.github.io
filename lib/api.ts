@@ -3,8 +3,11 @@
  */
 import { BirthProfile, LedgerRecord, ResearchArticle } from './types';
 
-const API_BASE = typeof window !== 'undefined' ? '' : 'http://127.0.0.1:8089';
-
+// Production Gateway vs Localhost Development Endpoint
+const PROD_API_GATEWAY = "https://meeting-tue-transform-cole.trycloudflare.com";
+const API_BASE = (typeof window !== 'undefined')
+  ? (window.location.hostname.includes('github.io') ? PROD_API_GATEWAY : '')
+  : 'http://127.0.0.1:8089';
 export async function calculateProfileApi(profile: BirthProfile): Promise<unknown> {
   const resp = await fetch(`${API_BASE}/api/calculate`, {
     method: 'POST',
@@ -40,8 +43,9 @@ export async function fetchCompareApi(profile: BirthProfile, lang: 'en' | 'vi'):
       year: profile.year,
       month: profile.month,
       day: profile.day,
-      hour: profile.hour !== null ? profile.hour : 12,
-      minute: profile.minute !== null ? profile.minute : 0,
+      hour: profile.isTimeUnknown ? null : profile.hour,
+      minute: profile.isTimeUnknown ? null : profile.minute,
+      is_time_unknown: profile.isTimeUnknown,
       gender: 1,
       latitude: profile.latitude,
       longitude: profile.longitude,

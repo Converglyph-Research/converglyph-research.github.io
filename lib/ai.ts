@@ -20,8 +20,10 @@ export async function streamAiReasoning({
   onError,
   onDone
 }: AiStreamOptions): Promise<void> {
-  const API_BASE = typeof window !== 'undefined' ? '' : 'http://127.0.0.1:8089';
-
+  const PROD_API_GATEWAY = "https://meeting-tue-transform-cole.trycloudflare.com";
+  const API_BASE = (typeof window !== 'undefined')
+    ? (window.location.hostname.includes('github.io') ? PROD_API_GATEWAY : '')
+    : 'http://127.0.0.1:8089';
   try {
     const resp = await fetch(`${API_BASE}/api/ai/reasoning`, {
       method: "POST",

@@ -26,10 +26,12 @@ export default function HomePage() {
   }, []);
 
   const handleProfileSubmit = async (p: BirthProfile) => {
-    await calculateProfileApi(p);
-    window.location.href = '/explore';
+    const rawData = await calculateProfileApi(p);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('aetheria_custom_profile', JSON.stringify({ profile: p, rawData }));
+      window.location.href = '/explore?profile=custom';
+    }
   };
-
   return (
     <>
       <PrototypeNotice bannerText={dict.proto_banner} />

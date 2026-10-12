@@ -17,19 +17,27 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange, isVietn
     if (onSessionChange) onSessionChange(s);
   }, []);
 
-  const handleSimulateGoogleLogin = () => {
-    // Standard Google Client Login
-    const demoSession: UserSession = {
-      name: "Researcher Account",
-      email: "researcher@aetheria.org",
-      sub: "google-10928374619",
-      picture: "https://lh3.googleusercontent.com/a/default-user=s96-c"
-    };
-    saveUserSession(demoSession);
-    setSession(demoSession);
-    if (onSessionChange) onSessionChange(demoSession);
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [customName, setCustomName] = React.useState('');
+  const [customEmail, setCustomEmail] = React.useState('');
+
+  const handleOpenAuthModal = () => {
+    setIsModalOpen(true);
   };
 
+  const handleConfirmAccess = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customEmail) return;
+    const userSession: UserSession = {
+      name: customName.trim() || customEmail.split('@')[0],
+      email: customEmail.trim(),
+      sub: `researcher-${Date.now()}`
+    };
+    saveUserSession(userSession);
+    setSession(userSession);
+    setIsModalOpen(false);
+    if (onSessionChange) onSessionChange(userSession);
+  };
   const handleLogout = () => {
     clearUserSession();
     setSession(null);
@@ -52,19 +60,76 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange, isVietn
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleSimulateGoogleLogin}
-      className="btn btn-outline"
-      style={{ fontSize: '0.75rem', padding: '0.35rem 0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}
-    >
-      <svg width="14" height="14" viewBox="0 0 24 24">
-        <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z" />
-        <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z" />
-        <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3 0-.8.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15.2c0 2.8.7 5.5 1.9 7.9l3.7-2.9z" />
-        <path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 16.9C3.7 20.7 7.5 23.5 12 23.5z" />
-      </svg>
-      <span>{isVietnamese ? 'Đăng nhập Google' : 'Sign in with Google'}</span>
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={handleOpenAuthModal}
+        className="btn btn-outline"
+        style={{ fontSize: '0.75rem', padding: '0.35rem 0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}
+      >
+        <span style={{ color: 'var(--celestial-gold)' }}>🔑</span>
+        <span>{isVietnamese ? 'Tài Khoản Nghiên Cứu' : 'Researcher Access'}</span>
+      </button>
+
+      {isModalOpen && (
+        <>
+          <div className="drawer-backdrop active" onClick={() => setIsModalOpen(false)} aria-hidden="true" />
+          <dialog className="calc-drawer open" style={{ width: '480px', zIndex: 1100 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div>
+                <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', color: 'var(--moon-ivory)' }}>
+                  {isVietnamese ? 'Xác Thực Tài Khoản Nghiên Cứu' : 'Researcher Access Portal'}
+                </h3>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginTop: '0.25rem' }}>
+                  {isVietnamese ? 'Cấp quyền truy cập sổ cái & API thử nghiệm' : 'Pre-Registration & API Sandbox Authorization'}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                style={{ background: 'none', border: 'none', fontSize: '1.6rem', color: 'var(--moon-ivory)', cursor: 'pointer' }}
+              >
+                &times;
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', lineHeight: '1.6', marginBottom: '1.25rem' }}>
+              {isVietnamese
+                ? 'Aetheria Research áp dụng cơ chế xác thực nghiên cứu định danh. Nhập thông tin để liên kết các dự đoán khóa mật mã và tải báo cáo chi tiết.'
+                : 'Aetheria Research authenticates researcher credentials to link cryptographic pre-registrations and unlock experimental monograph exports.'}
+            </p>
+
+            <form onSubmit={handleConfirmAccess}>
+              <div className="form-group">
+                <label className="form-label">{isVietnamese ? 'Họ tên hoặc Tổ chức' : 'Name / Institution'}</label>
+                <input
+                  type="text"
+                  className="text-input"
+                  placeholder={isVietnamese ? 'Ví dụ: TS. Nguyễn Văn A' : 'e.g. Dr. Jane Doe'}
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">{isVietnamese ? 'Email nghiên cứu' : 'Researcher Email'}</label>
+                <input
+                  type="email"
+                  className="text-input"
+                  placeholder="researcher@institution.org"
+                  value={customEmail}
+                  onChange={(e) => setCustomEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}>
+                {isVietnamese ? 'Kích Hoạt Phiên Nghiên Cứu' : 'Authorize Research Session'}
+              </button>
+            </form>
+          </dialog>
+        </>
+      )}
+    </>
   );
 };

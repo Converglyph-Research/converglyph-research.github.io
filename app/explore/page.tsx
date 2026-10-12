@@ -29,12 +29,78 @@ export default function ExplorePage() {
   const [isAiLoading, setIsAiLoading] = React.useState(false);
 
   React.useEffect(() => {
-    // Load initial compare synthesis data for Einstein
+    // Check if custom profile was saved from home form
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const savedCustom = localStorage.getItem('aetheria_custom_profile');
+      if (urlParams.get('profile') === 'custom' && savedCustom) {
+        try {
+          const parsed = JSON.parse(savedCustom);
+          if (parsed && parsed.profile && parsed.rawData) {
+            const derived = deriveDomainScores(parsed.rawData);
+            const customRes: LifeMapResult = {
+              profile: parsed.profile,
+              domain_scores: derived,
+              theme_details: [
+                {
+                  theme: "Intellect & First Principles",
+                  icon: "🧠",
+                  synthesis: `Computed cognitive synthesis for ${parsed.profile.name}.`,
+                  western_driver: `Mercury in ${parsed.rawData?.western?.planets?.find((p: any) => p.name === 'Mercury')?.sign || 'Aries'}`,
+                  eastern_driver: `Day Master: ${parsed.rawData?.bazi?.day_master?.name || 'Yang Fire'}`
+                },
+                {
+                  theme: "Vocation & Autonomy",
+                  icon: "🏛️",
+                  synthesis: `Vocational trajectory governed by ${parsed.rawData?.western?.midheaven?.sign || 'Pisces'} Midheaven.`,
+                  western_driver: `Midheaven at ${parsed.rawData?.western?.midheaven?.degree || 12}°`,
+                  eastern_driver: `Career Palace in ${parsed.rawData?.tuvi?.palaces?.find((p: any) => p.name?.includes('Career'))?.branch_vi || 'Ngọ'}`
+                },
+                {
+                  theme: "Material Resources",
+                  icon: "💎",
+                  synthesis: "Financial orientation shows deliberate resource pacing and capital mobilization.",
+                  western_driver: "2nd/8th houses division",
+                  eastern_driver: "Wealth Palace configuration"
+                },
+                {
+                  theme: "Personal Well-being",
+                  icon: "🌱",
+                  synthesis: "Personal stamina and somatic pacing anchored in Five Element distribution.",
+                  western_driver: `Sun in ${parsed.rawData?.western?.planets?.find((p: any) => p.name === 'Sun')?.sign || 'Pisces'}`,
+                  eastern_driver: `Wood ${parsed.rawData?.bazi?.elements_distribution?.Wood || 20}%, Fire ${parsed.rawData?.bazi?.elements_distribution?.Fire || 20}%`
+                },
+                {
+                  theme: "Partnership & Covenant",
+                  icon: "🤝",
+                  synthesis: "Relational contracts across 7th House & Spouse Palace.",
+                  western_driver: `Venus in ${parsed.rawData?.western?.planets?.find((p: any) => p.name === 'Venus')?.sign || 'Aries'}`,
+                  eastern_driver: "Spouse Palace branch placement"
+                },
+                {
+                  theme: "Inner Transformation",
+                  icon: "🔮",
+                  synthesis: `Philosophical resilience reflected in Life Path ${parsed.rawData?.numerology?.life_path_reduced?.number || 6}.`,
+                  western_driver: `Saturn in ${parsed.rawData?.western?.planets?.find((p: any) => p.name === 'Saturn')?.sign || 'Aries'}`,
+                  eastern_driver: "Ancestral Mind Palace in Wood"
+                }
+              ],
+              calculationVersion: "API-v1-custom"
+            };
+            setProfileResult(customRes);
+            setSelectedKey('custom');
+          }
+        } catch {}
+      }
+    }
+  }, []);
+
+  React.useEffect(() => {
+    // Load compare synthesis data whenever active profile or locale changes
     fetchCompareApi(profileResult.profile, locale)
       .then(setSynthesisData)
       .catch(console.warn);
   }, [profileResult.profile, locale]);
-
   const toggleTradition = (key: 'w' | 'b' | 't' | 'n') => {
     setTraditions(prev => ({ ...prev, [key]: !prev[key] }));
   };

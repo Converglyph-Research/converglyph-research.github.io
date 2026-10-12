@@ -10,18 +10,16 @@ export const ThemeCards: React.FC<ThemeCardsProps> = ({ details, isVietnamese })
   return (
     <div className="report-theme-list" id="domain-cards-list">
       {details.map((item, idx) => {
-        const isTension =
-          item.theme.includes('Partnership') ||
-          (item.synthesis && (item.synthesis.includes('Tension') || item.synthesis.includes('xung đột')));
-
+        const itemRecord = item as unknown as Record<string, unknown>;
+        const isDivergent = itemRecord.is_divergent === true || itemRecord.status === 'divergence';
         return (
           <div key={`theme-${idx}`} className="theme-editorial-item">
             <div className="theme-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
               <h4 className="theme-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.25rem', color: 'var(--moon-ivory-text)' }}>
                 {item.icon} {item.theme}
               </h4>
-              <span className={`status-chip ${isTension ? 'contradicted' : 'confirmed'}`}>
-                {isTension
+              <span className={`status-chip ${isDivergent ? 'contradicted' : 'confirmed'}`}>
+                {isDivergent
                   ? (isVietnamese ? 'Có Điểm Bất Đồng' : 'Doctrinal Divergence')
                   : (isVietnamese ? 'Đồng Thuận Diễn Giải' : 'Interpretive Consensus')}
               </span>
