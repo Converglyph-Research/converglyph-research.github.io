@@ -24,8 +24,8 @@ export default function ExplorePage() {
 
   // Deep-dive Comparative State
   const [synthesisData, setSynthesisData] = React.useState<any>(null);
-  const [activeLabTab, setActiveLabTab] = React.useState<'synthesis' | 'tuvi' | 'astro'>('synthesis');
-
+  const [activeLabTab, setActiveLabTab] = React.useState<'tuvi' | 'astro' | 'synthesis'>('tuvi');
+  const [showTechnicalDetails, setShowTechnicalDetails] = React.useState(false);
   // AI Thinking State (Groq LPU reasoning from tu-vi)
   const [aiThinkingText, setAiThinkingText] = React.useState<string>('');
   const [isAiLoading, setIsAiLoading] = React.useState(false);
@@ -386,31 +386,71 @@ REQUIREMENTS:
               </div>
             </div>
 
-            <div className="report-grid-layout">
-              <div className="report-radar-stage">
-                <RadarChart scores={profileResult.domain_scores} activeTraditions={traditions} />
-                <div className="radar-legend-strip">
-                  <span><span className="legend-dot" style={{ background: 'var(--color-western)' }}></span> Western</span>
-                  <span><span className="legend-dot" style={{ background: 'var(--color-bazi)' }}></span> Bát Tự</span>
-                  <span><span className="legend-dot" style={{ background: 'var(--color-tuvi)' }}></span> Tử Vi</span>
-                  <span><span className="legend-dot" style={{ background: 'var(--color-numerology)' }}></span> Numerology</span>
+            {Object.values(traditions).filter(Boolean).length >= 2 ? (
+              <div className="report-grid-layout">
+                <div className="report-radar-stage">
+                  <RadarChart scores={profileResult.domain_scores} activeTraditions={traditions} />
+                  <div className="radar-legend-strip">
+                    {traditions.w && <span><span className="legend-dot" style={{ background: 'var(--color-western)' }}></span> Western</span>}
+                    {traditions.b && <span><span className="legend-dot" style={{ background: 'var(--color-bazi)' }}></span> Bát Tự</span>}
+                    {traditions.t && <span><span className="legend-dot" style={{ background: 'var(--color-tuvi)' }}></span> Tử Vi</span>}
+                    {traditions.n && <span><span className="legend-dot" style={{ background: 'var(--color-numerology)' }}></span> Numerology</span>}
+                  </div>
+                </div>
+
+                <ThemeCards details={profileResult.theme_details} isVietnamese={locale === 'vi'} />
+              </div>
+            ) : (
+              <div className="matrix-editorial-card" style={{ padding: '2rem', textAlign: 'center' }}>
+                <div style={{ fontSize: '1.8rem', marginBottom: '0.5rem' }}>
+                  {traditions.w ? '🪐' : traditions.t ? '☯' : traditions.b ? '🎋' : '🔢'}
+                </div>
+                <h4 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.35rem', color: 'var(--moon-ivory)', marginBottom: '0.5rem' }}>
+                  {locale === 'vi' ? 'Chế Độ Khảo Sát Đơn Môn Phái' : 'Single-Tradition Examination Mode'}
+                </h4>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', maxWidth: '580px', margin: '0 auto 1.25rem', lineHeight: '1.6' }}>
+                  {locale === 'vi'
+                    ? 'Bạn đang chọn xem 1 trường phái duy nhất. Biểu đồ Radar đối sánh và bảng tổng hợp đa môn phái sẽ tự động kích hoạt khi bạn bật từ 2 môn phái trở lên. Bạn có thể xem kết quả tính toán chi tiết của môn phái này ở khu vực bên dưới.'
+                    : 'You are currently examining a single tradition. The multi-system polar radar chart and cross-tradition synthesis cards will activate when at least 2 traditions are selected. Detailed calculation metrics are displayed below.'}
+                </p>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    onClick={() => setTraditions({ w: true, b: true, t: true, n: true })}
+                    style={{ fontSize: '0.78rem' }}
+                  >
+                    ✦ {locale === 'vi' ? 'Kích hoạt cả 4 môn phái để đối sánh' : 'Enable all 4 traditions for convergence'}
+                  </button>
                 </div>
               </div>
-
-              <ThemeCards details={profileResult.theme_details} isVietnamese={locale === 'vi'} />
-            </div>
+            )}
           </div>
 
-          {/* Dedicated Deep-Dive Laboratory */}
+          {/* Dedicated Deep-Dive Laboratory with Collapsible Technical Toggle */}
           <div id="deep-dive-lab" style={{ marginTop: '3rem', marginBottom: '3.5rem' }}>
-            <div className="section-editorial-header">
-              <span className="section-editorial-eyebrow">Interactive Foundations Lab</span>
-              <h2 className="section-editorial-title">East–West Calculation Laboratory</h2>
-              <p className="section-editorial-desc">
-                Inspect the deterministic calculation baselines: authentic 12 palaces from Tử Vi Đẩu Số and Swiss Ephemeris geometric aspect networks.
-              </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div>
+                <span className="section-editorial-eyebrow">
+                  {locale === 'vi' ? 'PHÒNG THÍ NGHIỆM ĐÔNG–TÂY' : 'Interactive Foundations Lab'}
+                </span>
+                <h2 className="section-editorial-title" style={{ marginTop: '0.2rem' }}>
+                  {locale === 'vi' ? 'Thông Số Tính Toán & Tọa Độ Bản Đồ' : 'Calculation Laboratory & Technical Metrics'}
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
+                style={{ fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+              >
+                <span>{showTechnicalDetails ? '▲' : '▼'}</span>
+                <span>{showTechnicalDetails ? (locale === 'vi' ? 'Thu gọn thông số kỹ thuật' : 'Hide Technical Details') : (locale === 'vi' ? 'Xem thông số chi tiết (Dành cho người quan tâm)' : 'Show Technical Calculations')}</span>
+              </button>
             </div>
 
+            {showTechnicalDetails && (
+              <div>
             <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
               <button
                 type="button"
@@ -448,7 +488,9 @@ REQUIREMENTS:
                         <h4 className="synthesis-card-title">{item.title}</h4>
                         <div className="synthesis-columns">
                           <div className="synthesis-subbox">
-                            <strong style={{ color: 'var(--color-tuvi)' }}>TỬ VI PALACES</strong>
+                            <strong style={{ color: 'var(--color-tuvi)' }}>
+                              {locale === 'vi' ? 'TỬ VI ĐẨU SỐ (THẬP NHỊ CUNG)' : 'TỬ VI PALACES'}
+                            </strong>
                             <div style={{ marginTop: '0.35rem', fontSize: '0.8rem', lineHeight: 1.5 }}>
                               {Object.entries(item.tuvi || {}).map(([tk, tv]) => (
                                 <div key={tk}><strong>{tk.replace(/_/g, ' ')}:</strong> {String(tv)}</div>
@@ -456,7 +498,9 @@ REQUIREMENTS:
                             </div>
                           </div>
                           <div className="synthesis-subbox">
-                            <strong style={{ color: 'var(--color-western)' }}>WESTERN EPHEMERIS</strong>
+                            <strong style={{ color: 'var(--color-western)' }}>
+                              {locale === 'vi' ? 'CHIÊM TINH TÂY PHƯƠNG (SWISS EPHEMERIS)' : 'WESTERN EPHEMERIS'}
+                            </strong>
                             <div style={{ marginTop: '0.35rem', fontSize: '0.8rem', lineHeight: 1.5 }}>
                               {Object.entries(item.astro || {}).map(([ak, av]) => (
                                 <div key={ak}><strong>{ak.replace(/_/g, ' ')}:</strong> {String(av)}</div>
@@ -559,8 +603,9 @@ REQUIREMENTS:
                 </div>
               </div>
             )}
+              </div>
+            )}
           </div>
-
           {/* Dedicated Chronological Time-Series & Cross-System Comparative Section */}
           <TimeSeriesConvergenceView
             isVietnamese={locale === 'vi'}

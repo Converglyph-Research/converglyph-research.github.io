@@ -4,6 +4,19 @@ All component updates, bug fixes, and design system refinements are tracked belo
 
 ---
 
+### [2026-10-12 17:30:50 UTC] [REFACTOR] Collapsible technical calculations, single-tradition view mode, and localized monograph headings
+
+- **Context & Problem:**
+  Added collapsible toggle for technical calculation metrics in the East-West Laboratory so everyday users see an uncluttered summary while interested users can expand full data. When only 1 tradition is selected, the radar chart is replaced with an informative single-tradition state. Localized monograph comparison columns to 'TỬ VI ĐẨU SỐ (THẬP NHỊ CUNG)' and 'CHIÊM TINH TÂY PHƯƠNG (SWISS EPHEMERIS)'.
+- **Files Modified:**
+  - `app/explore/page.tsx`
+- **Verification Evidence:**
+  npm run build passed generating all 15 static HTML routes without error.
+- **Engineering Insights & Risk Mitigation:**
+  Progressive disclosure of complex calculation metrics reduces cognitive overload on first visit while keeping research-grade data easily inspectable.
+
+---
+
 ### [2026-10-12 17:27:15 UTC] [FEAT] Database pre-check & overwrite confirmation dialog, isolated single-canon labs, and localized synthesis labels
 
 - **Context & Problem:**
