@@ -160,8 +160,8 @@ body {
   min-height: 4.75rem;
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
-  gap: 1rem;
-  flex-wrap: wrap;
+  gap: 1.25rem;
+  flex-wrap: nowrap;
 }
 
 .nav-brand {
@@ -244,8 +244,9 @@ body {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
-
 .nav-mobile-toggle {
   display: none;
   background: none;
@@ -326,6 +327,8 @@ body {
   transition: var(--transition-smooth);
   text-decoration: none;
   border: none;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .btn-primary {

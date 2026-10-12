@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { UserSession, getUserSession, saveUserSession, clearUserSession, decodeJwt } from '@/lib/auth';
+import { useLocale } from '@/lib/LocaleContext';
 
 declare global {
   interface Window {
@@ -22,21 +23,23 @@ interface GoogleAuthProps {
   isVietnamese?: boolean;
 }
 
-export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange, isVietnamese = false }) => {
+export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange }) => {
+  const { dict } = useLocale();
   const [session, setSession] = React.useState<UserSession | null>(null);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [customName, setCustomName] = React.useState('');
   const [customEmail, setCustomEmail] = React.useState('');
   const [hasGoogleClient, setHasGoogleClient] = React.useState(false);
+  const googleBtnContainerRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     const s = getUserSession();
     setSession(s);
     if (onSessionChange) onSessionChange(s);
 
-    // Initialize real Google Identity Services if client ID is configured
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
-    if (clientId && typeof window !== 'undefined' && window.google?.accounts?.id) {
+    // Initialize Google Identity Services
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '10928374619-aetheria.apps.googleusercontent.com';
+    if (typeof window !== 'undefined' && window.google?.accounts?.id) {
       setHasGoogleClient(true);
       window.google.accounts.id.initialize({
         client_id: clientId,
@@ -52,7 +55,10 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange, isVietn
               };
               saveUserSession(newSession);
               setSession(newSession);
+              setIsModalOpen(false);
               if (onSessionChange) onSessionChange(newSession);
+              // Navigate to personal explore page upon login
+              window.location.href = '/explore';
             }
           }
         }
@@ -60,29 +66,39 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange, isVietn
     }
   }, []);
 
-  const handleOpenAuth = () => {
-    // If real Google client is loaded and configured, prompt GIS One Tap
-    if (hasGoogleClient && window.google?.accounts?.id) {
-      window.google.accounts.id.prompt();
-    } else {
-      setIsModalOpen(true);
+  // When modal opens, render the official Google button if SDK is loaded
+  React.useEffect(() => {
+    if (isModalOpen && window.google?.accounts?.id && googleBtnContainerRef.current) {
+      window.google.accounts.id.renderButton(googleBtnContainerRef.current, {
+        theme: 'filled_black',
+        size: 'large',
+        shape: 'pill',
+        width: 320
+      });
     }
+  }, [isModalOpen]);
+
+  const handleOpenAuth = () => {
+    setIsModalOpen(true);
   };
 
-  const handleCustomAuth = (e: React.FormEvent) => {
+  const handleManualEmailLogin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!customEmail) return;
+    const emailInput = (e.currentTarget.querySelector('input[type="email"]') as HTMLInputElement)?.value || customEmail;
+    if (!emailInput) return;
+    const nameInput = (e.currentTarget.querySelector('input[type="text"]') as HTMLInputElement)?.value || customName;
+    
     const userSession: UserSession = {
-      name: customName.trim() || customEmail.split('@')[0],
-      email: customEmail.trim(),
+      name: nameInput.trim() || emailInput.split('@')[0],
+      email: emailInput.trim(),
       sub: `user-${Date.now()}`
     };
     saveUserSession(userSession);
     setSession(userSession);
     setIsModalOpen(false);
     if (onSessionChange) onSessionChange(userSession);
+    window.location.href = '/explore/';
   };
-
   const handleLogout = () => {
     clearUserSession();
     setSession(null);
@@ -91,7 +107,7 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange, isVietn
 
   if (session) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', background: 'rgba(38, 33, 58, 0.7)', border: '1px solid var(--border-editorial)', padding: '0.3rem 0.75rem', borderRadius: '999px', fontSize: '0.75rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', background: 'rgba(38, 33, 58, 0.7)', border: '1px solid var(--border-editorial)', padding: '0.3rem 0.75rem', borderRadius: '999px', fontSize: '0.75rem', flexShrink: 0 }}>
         {session.picture ? (
           <img src={session.picture} alt="" style={{ width: 18, height: 18, borderRadius: '50%' }} />
         ) : (
@@ -103,7 +119,7 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange, isVietn
           onClick={handleLogout}
           style={{ background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer', fontSize: '0.7rem', textDecoration: 'underline' }}
         >
-          {isVietnamese ? 'Đăng xuất' : 'Sign out'}
+          {dict.google_signout}
         </button>
       </div>
     );
@@ -115,7 +131,7 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange, isVietn
         type="button"
         onClick={handleOpenAuth}
         className="btn btn-outline"
-        style={{ fontSize: '0.75rem', padding: '0.35rem 0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}
+        style={{ fontSize: '0.75rem', padding: '0.35rem 0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0, whiteSpace: 'nowrap' }}
         aria-haspopup="dialog"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
@@ -124,20 +140,20 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange, isVietn
           <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3 0-.8.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15.2c0 2.8.7 5.5 1.9 7.9l3.7-2.9z" />
           <path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 16.9C3.7 20.7 7.5 23.5 12 23.5z" />
         </svg>
-        <span>{isVietnamese ? 'Đăng nhập Google' : 'Sign in with Google'}</span>
+        <span>{dict.google_signin}</span>
       </button>
 
       {isModalOpen && (
         <>
           <div className="drawer-backdrop active" onClick={() => setIsModalOpen(false)} aria-hidden="true" />
-          <dialog className="calc-drawer open" style={{ width: '480px', zIndex: 1100 }}>
+          <dialog className="calc-drawer open" style={{ width: '460px', zIndex: 1100, display: 'block' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <div>
                 <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', color: 'var(--moon-ivory)' }}>
-                  {isVietnamese ? 'Đăng Nhập Tài Khoản' : 'Account Authentication'}
+                  {dict.auth_modal_title}
                 </h3>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginTop: '0.25rem' }}>
-                  {isVietnamese ? 'Đồng bộ hồ sơ Tử Vi & Bản đồ sao với AI suy luận' : 'Sync Tử Vi & Astro Maps with AI Reasoning Studio'}
+                  {dict.auth_modal_subtitle}
                 </div>
               </div>
               <button
@@ -150,29 +166,38 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange, isVietn
             </div>
 
             <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', lineHeight: '1.6', marginBottom: '1.25rem' }}>
-              {isVietnamese
-                ? 'Đăng nhập để lưu trữ bản đồ tử vi, bản đồ sao chiêm tinh và kích hoạt mô hình suy luận sâu (Groq GPT-OSS 120B / Qwen 27B) với hạn ngạch mở rộng.'
-                : 'Sign in to sync your Tử Vi and Astrodienst charts, unlock extended AI Thinking limits, and track verified prediction ledger entries.'}
+              {dict.auth_modal_desc}
             </p>
 
-            <form onSubmit={handleCustomAuth}>
+            {/* Official Google Identity Button Container */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+              <div ref={googleBtnContainerRef} />
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+              <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>OR GOOGLE EMAIL</span>
+              <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
+            </div>
+
+            <form onSubmit={handleManualEmailLogin}>
               <div className="form-group">
-                <label className="form-label">{isVietnamese ? 'Họ và tên' : 'Full Name'}</label>
+                <label className="form-label">Full Name / Display Name</label>
                 <input
                   type="text"
                   className="text-input"
-                  placeholder={isVietnamese ? 'Ví dụ: Nguyễn Văn A' : 'e.g. Marie Curie'}
+                  placeholder="e.g. Marie Curie"
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
                 />
               </div>
 
               <div className="form-group">
-                <label className="form-label">{isVietnamese ? 'Email Google' : 'Google Account Email'}</label>
+                <label className="form-label">Google Account Email</label>
                 <input
                   type="email"
                   className="text-input"
-                  placeholder="your-name@gmail.com"
+                  placeholder="name@gmail.com"
                   value={customEmail}
                   onChange={(e) => setCustomEmail(e.target.value)}
                   required
@@ -180,7 +205,7 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange, isVietn
               </div>
 
               <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}>
-                {isVietnamese ? 'Xác Nhận Đăng Nhập' : 'Confirm Sign In'}
+                {dict.auth_btn_confirm}
               </button>
             </form>
           </dialog>

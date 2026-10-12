@@ -1,7 +1,12 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
+import { useLocale } from '@/lib/LocaleContext';
 
 export const Footer: React.FC = () => {
+  const { dict } = useLocale();
+
   return (
     <footer className="footer">
       <div className="container">
@@ -11,32 +16,32 @@ export const Footer: React.FC = () => {
               Converglyph Research
             </div>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', lineHeight: '1.7', maxWidth: '320px' }}>
-              The quantitative intelligence layer and reproducible evaluation framework for symbolic forecasting systems.
+              {dict.footer_tagline}
             </p>
           </div>
 
           <div className="footer-col">
-            <h4>Explore</h4>
+            <h4>{dict.footer_explore}</h4>
             <ul>
-              <li><Link href="/explore">Personal Life Map</Link></li>
-              <li><Link href="/explore#deep-dive-lab">East–West Laboratory</Link></li>
-              <li><Link href="/#how-it-works">How It Works</Link></li>
-              <li><Link href="/research#prediction-ledger">Prediction Ledger</Link></li>
+              <li><Link href="/explore">{dict.footer_lifemap}</Link></li>
+              <li><Link href="/explore#deep-dive-lab">{dict.footer_lab}</Link></li>
+              <li><Link href="/#how-it-works">{dict.footer_how}</Link></li>
+              <li><Link href="/research#prediction-ledger">{dict.footer_ledger}</Link></li>
             </ul>
           </div>
 
           <div className="footer-col">
-            <h4>Research</h4>
+            <h4>{dict.footer_research}</h4>
             <ul>
-              <li><Link href="/research#methodologies">Methodology Registry</Link></li>
-              <li><Link href="/research#systems-matrix">Convergence Matrix</Link></li>
-              <li><Link href="/research#claim-lifecycle">Claim Lifecycle</Link></li>
-              <li><Link href="/documentation#api-reference">API Documentation</Link></li>
+              <li><Link href="/research#methodologies">{dict.footer_registry}</Link></li>
+              <li><Link href="/research#systems-matrix">{dict.footer_matrix}</Link></li>
+              <li><Link href="/research#claim-lifecycle">{dict.footer_claims}</Link></li>
+              <li><Link href="/documentation#api-reference">{dict.footer_docs}</Link></li>
             </ul>
           </div>
 
           <div className="footer-col">
-            <h4>Governance & Ethics</h4>
+            <h4>{dict.footer_governance}</h4>
             <ul>
               <li><span style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>EU AI Act (Art. 50) Aligned</span></li>
               <li><span style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>DGCCRF Misleading Practice Safeguards</span></li>
@@ -46,7 +51,7 @@ export const Footer: React.FC = () => {
         </div>
 
         <div className="footer-bottom">
-          <div>© 2026 Converglyph Research. Developed in accordance with scientific humility and methodological transparency.</div>
+          <div>{dict.footer_copy}</div>
           <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--celestial-gold)', fontSize: '0.75rem' }}>
             Celestial Pop Editorial • Swiss Ephemeris Standard
           </div>
