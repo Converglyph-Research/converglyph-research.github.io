@@ -174,54 +174,70 @@ export default function ExplorePage() {
     setAiThinkingText('');
   };
 
-  // Run AI Thinking CoT synthesis across specific aspects or unified convergence
-  const handleRunAiThinking = async (mode: 'all' | 'tuvi' | 'astro' | 'bazi' | 'convergence' = 'all') => {
+  // Run AI Thinking CoT synthesis across specific methods, aspects, models, and languages
+  const handleRunAiThinking = async ({
+    method = 'unified',
+    aspect = 'all',
+    model = 'openai/gpt-oss-120b',
+    aiLang = 'vi'
+  }: {
+    method: 'unified' | 'tuvi' | 'astro' | 'bazi' | 'numerology';
+    aspect: string;
+    model: string;
+    aiLang: 'vi' | 'en';
+  }) => {
     setIsAiLoading(true);
     setAiThinkingText('');
 
     const name = profileResult.profile.name;
     const dateStr = `${profileResult.profile.year}-${String(profileResult.profile.month).padStart(2, '0')}-${String(profileResult.profile.day).padStart(2, '0')}`;
     const loc = profileResult.profile.locationName;
+    const isAiVi = (aiLang === 'vi');
 
     let sysPrompt = '';
     let userPrompt = '';
 
-    if (mode === 'tuvi') {
-      sysPrompt = locale === 'vi'
-        ? "Bạn là Đại Sư Tử Vi Đẩu Số tinh thông cổ kim (kết hợp Tử Vi Toàn Thư, Trung Châu phái và lý thuyết Tinh Bàn Tử Vân). Phân tích chi tiết 12 cung, các chính tinh miếu hãm, bộ sao đắc địa, Tứ Hóa và đại hạn 10 năm với định dạng Markdown chuyên nghiệp (bảng, tiêu đề rõ ràng)."
-        : "You are a Master of Classical Eastern Zi Wei Dou Shu (Purple Star Astrology). Deliver an authoritative, structured analysis of the 12 Palaces, star brightness levels, major luck decades, and transformations using clean Markdown headers and tables.";
-      userPrompt = `Đương số: ${name}, Sinh ngày: ${dateStr}, Nơi sinh: ${loc}. Hãy phân tích sâu sắc: 1. Cung Mệnh & Thân (Bản thể & Căn cơ), 2. Cung Quan Lộc & Tài Bạch (Sự nghiệp & Tài chính), 3. Cung Phu Thê (Hôn nhân), 4. Kim chỉ nam hành động và vận hạn.`;
-    } else if (mode === 'astro') {
-      sysPrompt = locale === 'vi'
-        ? "Bạn là Chuyên gia Chiêm Tinh Học Tây Phương (Western Astrologer) chuẩn Astrodienst và Cosmobiology. Luận giải chuyên sâu dựa trên The Big Three (Sun, Moon, Ascendant), hệ thống 12 Nhà và mạng lưới góc chiếu hình học (Aspects) chuẩn xác từ Swiss Ephemeris. Trình bày Markdown thẩm mỹ với đề mục và bảng phân tích."
+    // Gather available data context from calculations
+    let contextData = `Subject: ${name}, Date: ${dateStr}, Location: ${loc}.\n`;
+    if (synthesisData?.tuvi) {
+      const tb = synthesisData.tuvi.thienBan || {};
+      contextData += `Tu Vi Ban Menh: ${tb.banMenh || 'N/A'}, Cuc: ${tb.cuc || 'N/A'}.\n`;
+    }
+    if (synthesisData?.astro) {
+      const b3 = synthesisData.astro.big_three || {};
+      contextData += `Western Big Three: Sun ${b3.sun?.sign || 'N/A'}, Moon ${b3.moon?.sign || 'N/A'}, Ascendant ${b3.ascendant?.sign_name || 'N/A'}.\n`;
+    }
+
+    if (method === 'tuvi') {
+      sysPrompt = isAiVi
+        ? "Bạn là Đại Sư Tử Vi Đẩu Số tinh thông cổ kim (kết hợp Tử Vi Toàn Thư, Trung Châu phái và phương pháp Tinh Bàn Tử Vân). Luận giải chuyên sâu theo tinh đẩu, miếu hãm, tam phương tứ chính và đại hạn. BẮT BUỘC TRÌNH BÀY MARKDOWN ĐẸP MẮT: dùng tiêu đề rõ ràng, bảng markdown đối chiếu và danh sách điểm gạch đầu dòng."
+        : "You are a Master of Classical Eastern Zi Wei Dou Shu (Purple Star Astrology). Provide an authoritative analysis of the 12 Palaces, star brightness levels, major luck decades, and transformations using clean Markdown headers, bullet points, and comparison tables.";
+      userPrompt = `${contextData}\nKhía cạnh khảo sát: ${aspect}.\nHãy phân tích chuyên sâu chi tiết: 1. Đắc Hãm & Cục Số, 2. Ảnh Hưởng Cung Trọng Tâm (${aspect}), 3. Bảng Phân Tích Cát/Hung & Tinh Đẩu, 4. Lời Khuyên Hành Động Thực Tiễn.`;
+    } else if (method === 'astro') {
+      sysPrompt = isAiVi
+        ? "Bạn là Chuyên gia Chiêm Tinh Học Tây Phương (Western Astrologer) chuẩn Astrodienst và Cosmobiology. Luận giải chuyên sâu dựa trên The Big Three (Sun, Moon, Ascendant), hệ thống 12 Nhà và mạng lưới góc chiếu hình học (Aspects) từ Swiss Ephemeris. BẮT BUỘC TRÌNH BÀY BẢNG MARKDOWN VÀ ĐỀ MỤC."
         : "You are an Astrodienst-standard Western Astrologer. Analyze the Big Three (Sun, Moon, Ascendant), Placidus house rulers, and geometric aspect networks using structured Markdown tables and headers.";
-      userPrompt = `Subject: ${name}, Birth: ${dateStr}, Location: ${loc}. Analyze: 1. Core Psychological Blueprint (Sun, Moon, Rising), 2. House Dynamics & Career Zenith (Midheaven), 3. Critical Aspect Tensions & Talents, 4. Strategic Life Advice.`;
-    } else if (mode === 'bazi') {
-      sysPrompt = locale === 'vi'
-        ? "Bạn là Chuyên gia Bát Tự Tứ Trụ (Four Pillars of Destiny). Phân tích dựa trên Nhật Chủ (Day Master), tiết khí thiên văn 24 Jie Qi, thế cân bằng Ngũ Hành (Kim, Mộc, Thủy, Hỏa, Thổ) và Thập Thần. Trình bày Markdown chuyên nghiệp."
-        : "You are a BaZi Four Pillars Master. Analyze Day Master balance, Five Element distributions, and Ten Gods dynamics using clear Markdown formatting.";
-      userPrompt = `Subject: ${name}, Birth: ${dateStr}, Location: ${loc}. Evaluate: 1. Day Master Element & Polarity, 2. Dynamic Five Elements Balance, 3. Useful God (Dụng Thần) & Flow, 4. Career and Health Counsel.`;
-    } else if (mode === 'convergence') {
-      sysPrompt = locale === 'vi'
-        ? "Bạn là Nhà Nghiên Cứu Định Lượng Đối Sánh Mệnh Lý Học Đông - Tây. Trách nhiệm của bạn là tổng hợp dữ liệu từ 4 môn phái (Chiêm Tinh Tây Phương, Tử Vi, Bát Tự, Thần Số Học) để đo lường mức độ ĐỒNG THUẬN (Convergence) và MÂU THUẪN (Divergence), nêu rõ điểm trùng khớp kỳ diệu và điểm phân kỳ học thuật dưới dạng bảng Markdown."
-        : "You are a Quantitative Cross-Tradition Synthesis Researcher. Evaluate convergence and divergence across Western Astrology, Tu Vi, BaZi, and Numerology. Surface remarkable points of consensus and explain doctrinal conflicts objectively in structured Markdown tables.";
-      userPrompt = `Đương số: ${name}, Sinh ngày: ${dateStr}, Tọa độ: ${loc}. Đối sánh: 1. Bảng Tổng Hợp Đồng Thuận (Chủ đề, Dấu ấn các môn phái, Tỷ lệ đồng thuận), 2. Bảng Phân Kỳ Học Thuật (Điểm mâu thuẫn giữa các quy tắc), 3. Kết Luận Hợp Nhất Đa Chiều.`;
+      userPrompt = `${contextData}\nInquiry aspect: ${aspect}.\nProvide deep analysis: 1. Psychological Blueprint, 2. Focus on Aspect (${aspect}), 3. Aspect Tension Matrix (Markdown Table), 4. Evolutionary Growth Counsel.`;
+    } else if (method === 'bazi') {
+      sysPrompt = isAiVi
+        ? "Bạn là Bậc Thầy Bát Tự Tứ Trụ (Four Pillars of Destiny). Phân tích dựa trên Nhật Chủ (Day Master), tiết khí 24 Jie Qi, thế cân bằng Ngũ Hành (Kim, Mộc, Thủy, Hỏa, Thổ), Thập Thần và Dụng Thần. Trình bày bảng Markdown và phân tích sinh khắc."
+        : "You are a BaZi Four Pillars Master. Analyze Day Master balance, Five Element distributions, and Ten Gods dynamics using clear Markdown formatting and tables.";
+      userPrompt = `${contextData}\nKhía cạnh khảo sát: ${aspect}.\nPhân tích: 1. Nhật Chủ & Can Chi Tứ Trụ, 2. Bảng Phân Bổ Ngũ Hành & Thập Thần, 3. Dụng Thần & Hỷ Thần, 4. Vận Trình & Định Hướng.`;
+    } else if (method === 'numerology') {
+      sysPrompt = isAiVi
+        ? "Bạn là Chuyên gia Thần Số Học Pythagore & Chaldean. Phân tích đối chiếu song song Công thức A (Cộng tổng chữ số giữ Master 11, 22, 33) và Công thức B (Rút gọn độc lập từng chu kỳ). Trình bày bảng Markdown đối chiếu."
+        : "You are a Pythagorean & Chaldean Numerology Scholar. Cross-examine Master Number preservation vs independent period reduction using structured Markdown tables.";
+      userPrompt = `${contextData}\nKhía cạnh: ${aspect}.\nPhân tích: 1. Đối Chiếu Hai Công Thức Đường Đời (Bảng Markdown), 2. Con Số Linh Hồn & Biểu Đạt, 3. Chu Kỳ Cá Nhân & Kim Chỉ Nam.`;
     } else {
-      // Mode === 'all': Full integration
-      sysPrompt = locale === 'vi'
-        ? "Bạn là Viện Trưởng Nghiên Cứu Biểu Tượng & Mệnh Lý Học Đa Chiều (Converglyph Research Intelligence). Hãy thực thi chuỗi suy luận Chain-of-Thought (CoT) hợp nhất toàn diện 4 hệ thống: 1. Tử Vi Đẩu Số 12 Cung, 2. Chiêm Tinh Học Tây Phương Swiss Ephemeris, 3. Bát Tự Tứ Trụ, 4. Thần Số Học Pythagore. Định dạng Markdown cao cấp với bảng phân tích đối sánh, trích dẫn quy tắc và kim chỉ nam khai phóng."
-        : "You are the Lead Symbolic Intelligence Synthesizer at Converglyph Research. Execute a comprehensive Chain-of-Thought (CoT) integration across Tu Vi, Western Astrodienst, BaZi, and Pythagorean Numerology. Structure into Markdown headers, comparison tables, and actionable philosophical counsel.";
-      userPrompt = `Subject: ${name}, Birth Date: ${dateStr}, Location: ${loc}.
-Produce a comprehensive Master Synthesis:
-### 1. Bản Thể Cốt Lõi & Động Lực Trí Tuệ (Core Ego & Cognitive Style)
-### 2. Sự Nghiệp, Danh Vọng & Quyền Lực (Vocation, Zenith & Wealth)
-### 3. Tình Duyên & Mối Quan Hệ (Partnership & Covenant)
-### 4. Ma Trận Đối Sánh Đồng Thuận vs Mâu Thuẫn (Convergence vs Divergence Matrix)
-### 5. Kim Chỉ Nam Khai Phóng Tiềm Năng (Actionable Strategic Counsel)`;
+      // Mode === 'unified' (Requires multi-system data)
+      sysPrompt = isAiVi
+        ? "Bạn là Viện Trưởng Nghiên Cứu Mệnh Lý Học Đa Chiều (Converglyph Research). Hãy tích hợp và đối chiếu toàn bộ dữ liệu từ các phương pháp có sẵn (Chiêm Tinh Tây Phương, Tử Vi, Bát Tự, Thần Số Học). BẮT BUỘC TRÌNH BÀY:\n1. BẢNG ĐỒNG THUẬN Ý NGHĨA (Chủ đề, Dấu ấn các môn phái, Mức độ hội tụ)\n2. BẢNG PHÂN KỲ HỌC THUẬT (Mâu thuẫn giữa các quy tắc)\n3. KIM CHỈ NAM TỔNG HỢP TOÀN DIỆN."
+        : "You are the Lead Symbolic Intelligence Synthesizer at Converglyph Research. Synthesize all active calculation outputs across Western Astrology, Tu Vi, BaZi, and Numerology. YOU MUST PROVIDE:\n1. CONVERGENCE MATRIX TABLE (Theme, Cross-System Signatures, Alignment Level)\n2. DOCTRINAL DIVERGENCE TABLE (Rule Contradictions & Tension)\n3. UNIFIED STRATEGIC COUNSEL.";
+      userPrompt = `${contextData}\nKhía cạnh trọng tâm: ${aspect}.\nHãy thực hiện luận giải hợp nhất đa hệ thống với các bảng Markdown chi tiết.`;
     }
 
     await streamAiReasoning({
-      model: "openai/gpt-oss-120b",
+      model: model || "openai/gpt-oss-120b",
       systemPrompt: sysPrompt,
       userPrompt,
       onChunk: (chunk) => setAiThinkingText(prev => prev + chunk),
@@ -324,20 +340,8 @@ Produce a comprehensive Master Synthesis:
             </div>
           </div>
 
-          {/* Modern AI Reasoning Studio with Aspect Switching & Formatted Markdown */}
-          <AiReasoningStudio
-            isVietnamese={locale === 'vi'}
-            subjectName={profileResult.profile.name}
-            birthDateStr={`${profileResult.profile.year}-${String(profileResult.profile.month).padStart(2, '0')}-${String(profileResult.profile.day).padStart(2, '0')}`}
-            locationName={profileResult.profile.locationName}
-            synthesisData={synthesisData}
-            onRunReasoning={handleRunAiThinking}
-            reasoningText={aiThinkingText}
-            isLoading={isAiLoading}
-          />
-
           {/* Dedicated Deep-Dive Laboratory */}
-          <div id="deep-dive-lab" style={{ marginTop: '3rem' }}>
+          <div id="deep-dive-lab" style={{ marginTop: '3rem', marginBottom: '3.5rem' }}>
             <div className="section-editorial-header">
               <span className="section-editorial-eyebrow">Interactive Foundations Lab</span>
               <h2 className="section-editorial-title">East–West Calculation Laboratory</h2>
@@ -493,6 +497,19 @@ Produce a comprehensive Master Synthesis:
               </div>
             )}
           </div>
+
+          {/* Modern AI Reasoning Studio Placed AFTER Calculation Laboratory */}
+          <AiReasoningStudio
+            isVietnamese={locale === 'vi'}
+            subjectName={profileResult.profile.name}
+            birthDateStr={`${profileResult.profile.year}-${String(profileResult.profile.month).padStart(2, '0')}-${String(profileResult.profile.day).padStart(2, '0')}`}
+            locationName={profileResult.profile.locationName}
+            synthesisData={synthesisData}
+            activeMethodsCount={Object.values(traditions).filter(Boolean).length}
+            onRunReasoning={handleRunAiThinking}
+            reasoningText={aiThinkingText}
+            isLoading={isAiLoading}
+          />
         </div>
       </main>
 

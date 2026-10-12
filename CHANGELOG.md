@@ -4,6 +4,20 @@ All component updates, bug fixes, and design system refinements are tracked belo
 
 ---
 
+### [2026-10-12 16:42:01 UTC] [REFACTOR] Reordered AiReasoningStudio below calculation lab, added model & language selectors, aspect drill-down, and markdown table rendering
+
+- **Context & Problem:**
+  Positioned AiReasoningStudio below the East-West Calculation Laboratory. Implemented multi-model selection (GPT-OSS 120B, GPT-OSS 20B, Qwen 3.8 27B) and language selection (vi/en). Restructured aspect drill-downs per method (Tu Vi, Western Astro, BaZi, Numerology) and added table rendering support to formatAiMarkdown.
+- **Files Modified:**
+  - `components/report/AiReasoningStudio.tsx`
+  - `app/explore/page.tsx`
+- **Verification Evidence:**
+  npm run build passed generating all 15 static HTML routes without error.
+- **Engineering Insights & Risk Mitigation:**
+  Placing AI reasoning after the calculation laboratory matches user natural cognitive flow: users first inspect deterministic calculation baselines, then choose specific methods and aspects to synthesize with AI.
+
+---
+
 ### [2026-10-12 16:32:31 UTC] [FEAT] AI Reasoning Studio with multi-tradition aspect switching, Markdown CoT rendering, and multi-system convergence synthesis
 
 - **Context & Problem:**
