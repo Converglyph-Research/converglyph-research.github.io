@@ -276,44 +276,77 @@ export default function ExplorePage() {
     let sysPrompt = '';
     let userPrompt = '';
 
-    // Gather comprehensive multi-system data context from calculations
-    let contextData = `=== DỮ LIỆU ĐƯƠNG SỐ & ĐỘNG CƠ TÍNH TOÁN CHUẨN XÁC ===\n`;
-    contextData += `- Họ tên: ${name} | Ngày sinh: ${dateStr} | Nơi sinh: ${loc}\n`;
+    // Double-blind anonymization protocol (Carlson 1985 standard):
+    // Strip explicit famous names from the LLM prompt to prevent training-weight prior bias (halo effect)
+    const blindedSubjectToken = `Subject_${profileResult.profile.year}_${String(profileResult.profile.month).padStart(2, '0')}`;
+    let contextData = `=== DỮ LIỆU ĐƯƠNG SỐ ĐÃ TÍNH TOÁN TIỀN ĐỊNH (PRE-CALCULATED DATA / DOUBLE-BLIND PROTOCOL) ===\n`;
+    contextData += `- Mã định danh đối tượng (Anonymized Token): ${blindedSubjectToken}\n`;
+    contextData += `- Ngày sinh & Tọa độ thiên văn: ${dateStr} | Tọa độ: ${profileResult.profile.latitude ?? 0}°N, ${profileResult.profile.longitude ?? 0}°E\n`;
     contextData += `- Chu kỳ thời gian khảo sát (Time Horizon): ${timeHorizon}\n`;
     contextData += `- Khía cạnh trọng tâm (Aspect): ${aspect}\n\n`;
 
-    if (synthesisData?.tuvi) {
-      const tb = synthesisData.tuvi.thienBan || {};
-      contextData += `1. DỮ LIỆU TỬ VI ĐẨU SỐ:\n`;
-      contextData += `- Bản mệnh: ${tb.banMenh || 'N/A'} | Cục: ${tb.cuc || 'N/A'} | Âm dương: ${tb.amDuongMenh || 'N/A'}\n`;
+    // 1. Pre-calculated Tu Vi Dau So
+    const rawDataPayload = (profileResult && typeof profileResult === 'object' && 'rawData' in profileResult)
+      ? (profileResult.rawData as Record<string, unknown>)
+      : undefined;
+
+    const tuviSource = (synthesisData?.tuvi || rawDataPayload?.tuvi) as Record<string, unknown> | undefined;
+    if (tuviSource) {
+      const tb = (tuviSource.thienBan as Record<string, unknown>) || {};
+      contextData += `1. DỮ LIỆU TỬ VI ĐẨU SỐ (TIỀN TÍNH TOÁN - PRE-CALCULATED):\n`;
+      contextData += `- Bản mệnh: ${tb.banMenh || 'N/A'} | Cục: ${tb.cuc || 'N/A'} | Âm dương: ${tb.amDuongMenh || 'N/A'} | Giờ Can Chi: ${tb.gioSinh || 'N/A'}\n`;
       contextData += `- Mệnh chủ: ${tb.menhChu || 'N/A'} | Thân chủ: ${tb.thanChu || 'N/A'}\n`;
-      const palaces = (synthesisData.tuvi.palaces || []).map((p: any) => `Cung ${p.tenCung} (${p.cungCanChi}): ${p.chinhTinh?.join(', ') || 'VCD'}`).join('; ');
-      contextData += `- 12 Cung: ${palaces}\n\n`;
+      const palacesList = Array.isArray(tuviSource.palaces) ? (tuviSource.palaces as Array<Record<string, unknown>>) : [];
+      const palaces = palacesList.map((p) => {
+        const chinhTinhStr = Array.isArray(p.chinhTinh) ? p.chinhTinh.join(', ') : 'VCD';
+        return `Cung ${p.tenCung} (${p.cungCanChi}): ${chinhTinhStr}${p.daiHan ? ` [Đại hạn: ${p.daiHan}]` : ''}`;
+      }).join('; ');
+      contextData += `- 12 Cung & Tinh Đẩu: ${palaces}\n\n`;
     }
 
-    if (synthesisData?.astro) {
-      const b3 = synthesisData.astro.big_three || {};
-      contextData += `2. DỮ LIỆU CHIÊM TINH TÂY PHƯƠNG (SWISS EPHEMERIS):\n`;
-      contextData += `- Big Three: Sun ${b3.sun?.sign || 'N/A'}, Moon ${b3.moon?.sign || 'N/A'}, Ascendant ${b3.ascendant?.sign_name || 'N/A'}\n`;
-      const mc = synthesisData.astro.angles?.Midheaven;
+    // 2. Pre-calculated Western Astrology (Swiss Ephemeris)
+    const astroSource = (synthesisData?.astro || rawDataPayload?.western) as Record<string, unknown> | undefined;
+    if (astroSource) {
+      const b3 = (astroSource.big_three as Record<string, Record<string, unknown>>) || {};
+      const planetsList = Array.isArray(astroSource.planets) ? (astroSource.planets as Array<Record<string, unknown>>) : [];
+      const sunSign = b3.sun?.sign || planetsList.find((p) => p.name === 'Sun')?.sign || 'N/A';
+      const moonSign = b3.moon?.sign || planetsList.find((p) => p.name === 'Moon')?.sign || 'N/A';
+      const ascSign = b3.ascendant?.sign_name || (astroSource.ascendant as Record<string, unknown>)?.sign || 'N/A';
+      contextData += `2. DỮ LIỆU CHIÊM TINH TÂY PHƯƠNG (SWISS EPHEMERIS - TIỀN TÍNH TOÁN):\n`;
+      contextData += `- The Big Three: Sun ${sunSign}, Moon ${moonSign}, Ascendant ${ascSign}\n`;
+      const mc = (astroSource.angles as Record<string, Record<string, unknown>>)?.Midheaven || (astroSource.midheaven as Record<string, unknown>);
       if (mc) contextData += `- Midheaven (MC): ${mc.sign || 'N/A'} (${mc.degree || 0}°)\n`;
-      const aspectsList = (synthesisData.astro.aspects || []).slice(0, 10).map((a: any) => `${a.aspect_name || a.type}: ${a.body1_name || a.p1} & ${a.body2_name || a.p2} (${a.actual_angle || a.angle}°)`).join('; ');
-      contextData += `- Góc chiếu chính: ${aspectsList}\n\n`;
+      const aspectsRaw = Array.isArray(astroSource.aspects) ? (astroSource.aspects as Array<Record<string, unknown>>) : [];
+      const aspectsList = aspectsRaw.slice(0, 10).map((a) => `${a.aspect_name || a.type || 'Aspect'}: ${a.body1_name || a.p1} & ${a.body2_name || a.p2} (${a.actual_angle || a.angle || 0}°)`).join('; ');
+      contextData += `- Mạng lưới góc chiếu (Aspects): ${aspectsList || 'None'}\n\n`;
     }
 
-    // BaZi and Numerology context from profileResult
-    const baziData = (profileResult as any)?.rawData?.bazi;
-    if (baziData) {
-      contextData += `3. DỮ LIỆU BÁT TỰ TỨ TRỤ:\n`;
-      contextData += `- Nhật Chủ (Day Master): ${baziData.day_master?.name || 'N/A'} (${baziData.day_master?.element || 'N/A'})\n`;
-      contextData += `- Tứ Trụ: Năm ${baziData.four_pillars?.year?.label || 'N/A'}, Tháng ${baziData.four_pillars?.month?.label || 'N/A'}, Ngày ${baziData.four_pillars?.day?.label || 'N/A'}, Giờ ${baziData.four_pillars?.hour?.label || 'N/A'}\n\n`;
+    // 3. Pre-calculated BaZi Four Pillars
+    const baziSource = (synthesisData?.bazi || rawDataPayload?.bazi) as Record<string, unknown> | undefined;
+    if (baziSource) {
+      const dm = baziSource.day_master as Record<string, unknown> | undefined;
+      const fp = baziSource.four_pillars as Record<string, Record<string, unknown>> | undefined;
+      contextData += `3. DỮ LIỆU BÁT TỰ TỨ TRỤ (TIỀN TÍNH TOÁN - PRE-CALCULATED):\n`;
+      contextData += `- Nhật Chủ (Day Master): ${dm?.name || 'N/A'} (${dm?.element || 'N/A'} - ${dm?.polarity || ''})\n`;
+      contextData += `- Tứ Trụ: Năm ${fp?.year?.label || 'N/A'}, Tháng ${fp?.month?.label || 'N/A'}, Ngày ${fp?.day?.label || 'N/A'}, Giờ ${fp?.hour?.label || 'N/A'}\n`;
+      const elemDist = baziSource.elements_distribution as Record<string, number> | undefined;
+      if (elemDist) {
+        contextData += `- Cân bằng Ngũ Hành: Kim ${elemDist.Metal || 0}%, Mộc ${elemDist.Wood || 0}%, Thủy ${elemDist.Water || 0}%, Hỏa ${elemDist.Fire || 0}%, Thổ ${elemDist.Earth || 0}%\n\n`;
+      }
     }
 
-    const numData = (profileResult as any)?.rawData?.numerology;
-    if (numData) {
-      contextData += `4. DỮ LIỆU THẦN SỐ HỌC (PYTHAGOREAN DUAL LINEAGE):\n`;
-      contextData += `- Life Path Master Preservation (Công thức A): ${numData.life_path_master?.number || 'N/A'} (${numData.life_path_master?.archetype || 'N/A'})\n`;
-      contextData += `- Life Path Period Reduction (Công thức B): ${numData.life_path_reduced?.number || 'N/A'} (${numData.life_path_reduced?.archetype || 'N/A'})\n\n`;
+    // 4. Pre-calculated Pythagorean Numerology
+    const numSource = (synthesisData?.numerology || rawDataPayload?.numerology) as Record<string, unknown> | undefined;
+    if (numSource) {
+      const lpMaster = (numSource.life_path_master_preserved || numSource.life_path_master) as Record<string, unknown> | undefined;
+      const lpRed = numSource.life_path_reduced as Record<string, unknown> | undefined;
+      const expr = numSource.expression as Record<string, unknown> | undefined;
+      const soul = numSource.soul_urge as Record<string, unknown> | undefined;
+      contextData += `4. DỮ LIỆU THẦN SỐ HỌC (PYTHAGOREAN DUAL LINEAGE - TIỀN TÍNH TOÁN):\n`;
+      contextData += `- Life Path Master Preservation (Công thức A): ${lpMaster?.number || 'N/A'} (${lpMaster?.archetype || 'N/A'})\n`;
+      contextData += `- Life Path Period Reduction (Công thức B): ${lpRed?.number || 'N/A'} (${lpRed?.archetype || 'N/A'})\n`;
+      if (expr) contextData += `- Chỉ số Biểu Đạt (Expression Number): ${expr.number}\n`;
+      if (soul) contextData += `- Con số Linh Hồn (Soul Urge): ${soul.number}\n\n`;
     }
     if (method === 'tuvi') {
       sysPrompt = isAiVi

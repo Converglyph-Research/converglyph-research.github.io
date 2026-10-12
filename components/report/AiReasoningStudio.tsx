@@ -6,50 +6,63 @@ import { fetchAiHistoryApi } from '@/lib/api';
  */
 export function formatAiMarkdown(md: string): string {
   if (!md) return '';
-  let html = md;
+
   // Sanitize unicode thin spaces often emitted by LLMs in LaTeX formulas
-  html = html.replace(/[\u202F\u00A0\u200B]/g, ' ');
+  let text = md.replace(/[\u202F\u00A0\u200B]/g, ' ');
 
-  // 1. Render Display Math: both $$...$$ and \[...\] with KaTeX before HTML character escaping
-  html = html.replace(/\\\[([\s\S]+?)\\\]/g, (_, equation) => {
+  // Placeholders for preserved math and code segments
+  const placeholders: string[] = [];
+  const makePlaceholder = (html: string) => {
+    const idx = placeholders.length;
+    placeholders.push(html);
+    return `___MATH_BLOCK_${idx}___`;
+  };
+
+  // 1. Preserve Display Math: both $$...$$ and \[...\] with KaTeX
+  text = text.replace(/\\\[([\s\S]+?)\\\]/g, (_, equation) => {
     try {
-      return `<div class="katex-display-wrapper" style="overflow-x: auto; margin: 1rem 0; padding: 0.5rem 0; text-align: center;">${katex.renderToString(equation.trim(), { displayMode: true, throwOnError: false })}</div>`;
+      return makePlaceholder(`<div class="katex-display-wrapper" style="overflow-x: auto; margin: 1rem 0; padding: 0.5rem 0; text-align: center;">${katex.renderToString(equation.trim(), { displayMode: true, throwOnError: false })}</div>`);
     } catch {
-      return `<div style="text-align: center; font-family: var(--font-mono); margin: 0.75rem 0; color: var(--celestial-gold);">${equation}</div>`;
+      return makePlaceholder(`<div style="text-align: center; font-family: var(--font-mono); margin: 0.75rem 0; color: var(--celestial-gold);">${equation}</div>`);
     }
   });
-  html = html.replace(/\$\$([\s\S]+?)\$\$/g, (_, equation) => {
+  text = text.replace(/\$\$([\s\S]+?)\$\$/g, (_, equation) => {
     try {
-      return `<div class="katex-display-wrapper" style="overflow-x: auto; margin: 1rem 0; padding: 0.5rem 0; text-align: center;">${katex.renderToString(equation.trim(), { displayMode: true, throwOnError: false })}</div>`;
+      return makePlaceholder(`<div class="katex-display-wrapper" style="overflow-x: auto; margin: 1rem 0; padding: 0.5rem 0; text-align: center;">${katex.renderToString(equation.trim(), { displayMode: true, throwOnError: false })}</div>`);
     } catch {
-      return `<div style="text-align: center; font-family: var(--font-mono); margin: 0.75rem 0; color: var(--celestial-gold);">${equation}</div>`;
+      return makePlaceholder(`<div style="text-align: center; font-family: var(--font-mono); margin: 0.75rem 0; color: var(--celestial-gold);">${equation}</div>`);
     }
   });
 
-  // 2. Render Inline Math: both \(...\) and $...$ with KaTeX
-  html = html.replace(/\\\(([\s\S]+?)\\\)/g, (_, equation) => {
+  // 2. Preserve Inline Math: both \(...\) and $...$ with KaTeX
+  text = text.replace(/\\\(([\s\S]+?)\\\)/g, (_, equation) => {
     try {
-      return katex.renderToString(equation.trim(), { displayMode: false, throwOnError: false });
+      return makePlaceholder(katex.renderToString(equation.trim(), { displayMode: false, throwOnError: false }));
     } catch {
-      return `<code style="font-family: var(--font-mono); color: var(--celestial-gold);">${equation}</code>`;
+      return makePlaceholder(`<code style="font-family: var(--font-mono); color: var(--celestial-gold);">${equation}</code>`);
     }
   });
-  html = html.replace(/\$([^\$\n]+?)\$/g, (_, equation) => {
+  text = text.replace(/\$([^\$\n]+?)\$/g, (_, equation) => {
     try {
-      return katex.renderToString(equation.trim(), { displayMode: false, throwOnError: false });
+      return makePlaceholder(katex.renderToString(equation.trim(), { displayMode: false, throwOnError: false }));
     } catch {
-      return `<code style="font-family: var(--font-mono); color: var(--celestial-gold);">${equation}</code>`;
+      return makePlaceholder(`<code style="font-family: var(--font-mono); color: var(--celestial-gold);">${equation}</code>`);
     }
   });
-  // Protect intentional line breaks
-  html = html.replace(/<br\s*\/?>/gi, '___AIMD_BR___');
 
-  // Fenced Code blocks
-  html = html.replace(/```([a-z0-9_-]*)\n([\s\S]*?)```/gim, (_, __, code) => {
-    const escapedCode = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return `<pre style="background: rgba(0,0,0,0.5); padding: 1rem; border-radius: 8px; font-family: var(--font-mono); font-size: 0.8rem; overflow-x: auto; margin: 1rem 0;"><code>${escapedCode.trim()}</code></pre>`;
+  // 3. Preserve Fenced Code blocks
+  text = text.replace(/```([a-z0-9_-]*)\n([\s\S]*?)```/gim, (_, __, code) => {
+    const escapedCode = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return makePlaceholder(`<pre style="background: rgba(0,0,0,0.5); padding: 1rem; border-radius: 8px; font-family: var(--font-mono); font-size: 0.8rem; overflow-x: auto; margin: 1rem 0;"><code>${escapedCode.trim()}</code></pre>`);
   });
 
+  // 4. Protect intentional line breaks
+  text = text.replace(/<br\s*\/?>/gi, '___AIMD_BR___');
+
+  // 5. Sanitize HTML tags in raw text (neutralizing any dangerous elements like <script>, <iframe>, <img onerror>, etc.)
+  text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  let html = text;
   // Inline code
   html = html.replace(/`([^`\n]+)`/g, '<code style="background: rgba(217,193,143,0.15); color: var(--celestial-gold); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.85em;">$1</code>');
 
@@ -161,6 +174,11 @@ export function formatAiMarkdown(md: string): string {
   html = html.replace(/^\s*(\d+)\.\s+(.*$)/gim, '<div style="display: flex; gap: 0.6rem; margin: 0.45rem 0; align-items: baseline;"><span style="color: var(--color-western); font-weight: 600; font-family: var(--font-mono); font-size: 0.85em;">$1.</span><div style="flex: 1;">$2</div></div>');
 
   html = html.replace(/___AIMD_BR___/g, '<br/>');
+
+  // Restore preserved math and code block placeholders
+  placeholders.forEach((blockHtml, i) => {
+    html = html.replace(`___MATH_BLOCK_${i}___`, blockHtml);
+  });
 
   return html;
 }

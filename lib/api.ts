@@ -82,9 +82,13 @@ export async function fetchAiHistoryApi(subjectName?: string, method?: string, a
   return [];
 }
 
-export async function deleteProfileApi(id: number | string): Promise<boolean> {
+export async function deleteProfileApi(id: number | string, userEmail?: string): Promise<boolean> {
   try {
-    const resp = await fetch(`${API_BASE}/api/profile/delete/${id}`);
+    const resp = await fetch(`${API_BASE}/api/profile/delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, user_email: userEmail })
+    });
     return resp.ok;
   } catch {}
   return false;
@@ -92,7 +96,11 @@ export async function deleteProfileApi(id: number | string): Promise<boolean> {
 
 export async function deleteAiHistoryApi(id: number | string): Promise<boolean> {
   try {
-    const resp = await fetch(`${API_BASE}/api/ai/history/delete/${id}`);
+    const resp = await fetch(`${API_BASE}/api/ai/history/delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
     return resp.ok;
   } catch {}
   return false;
