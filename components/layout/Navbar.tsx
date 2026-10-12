@@ -44,11 +44,13 @@ export const Navbar: React.FC<NavbarProps> = ({
           aria-label="Primary Navigation"
         >
           <Link href="/explore" className="nav-link">{dict.nav_explore}</Link>
+          <Link href="/personal" className="nav-link" style={{ color: 'var(--celestial-gold)' }}>
+            {currentLocale === 'vi' ? '✦ Cá Nhân' : '✦ Personal Space'}
+          </Link>
           <Link href="/research" className="nav-link">{dict.nav_research}</Link>
           <Link href="/articles" className="nav-link">{dict.nav_articles}</Link>
           <Link href="/documentation" className="nav-link">{dict.nav_docs}</Link>
         </nav>
-
         {/* Language switch */}
         <div className="lang-switch-group" role="group" aria-label="Language Switcher">
           <button

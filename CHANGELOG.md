@@ -4,6 +4,21 @@ All component updates, bug fixes, and design system refinements are tracked belo
 
 ---
 
+### [2026-10-12 16:10:16 UTC] [FEAT] Dedicated Personal Research Space (/personal), direct profile management, and GSI removeChild elimination
+
+- **Context & Problem:**
+  Implemented independent Personal Space route (/personal) separating user chart management, Google session control, and quick navigation shortcuts from landing page. Connected header session pill directly to /personal with clear Sign Out action. Completely detached dynamic GSI iframe DOM insertions to eliminate NotFoundError removeChild React crashes.
+- **Files Modified:**
+  - `app/personal/page.tsx`
+  - `components/auth/GoogleAuth.tsx`
+  - `components/layout/Navbar.tsx`
+- **Verification Evidence:**
+  npm run build passed generating 15/15 static HTML routes; verified /personal renders independently.
+- **Engineering Insights & Risk Mitigation:**
+  Splitting personal profile configuration from marketing/landing space drastically improves user flow, eliminates cluttered forms on home, and allows dedicated session synchronization.
+
+---
+
 ### [2026-10-12 16:02:01 UTC] [FIX] Google OAuth GSI popup integration, removeChild React crash fix, aspects table mapping, and bilingual translation completeness
 
 - **Context & Problem:**

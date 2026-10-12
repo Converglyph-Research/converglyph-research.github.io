@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { UserSession, getUserSession, saveUserSession, clearUserSession, decodeJwt } from '@/lib/auth';
 import { useLocale } from '@/lib/LocaleContext';
 
@@ -205,12 +206,14 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange }) => {
         fontSize: '0.75rem',
         flexShrink: 0
       }}>
-        {session.picture ? (
-          <img src={session.picture} alt="" style={{ width: 18, height: 18, borderRadius: '50%' }} />
-        ) : (
-          <span style={{ color: 'var(--celestial-gold)' }}>●</span>
-        )}
-        <span style={{ color: 'var(--moon-ivory)', fontFamily: 'var(--font-mono)' }}>{session.name}</span>
+        <Link href="/personal" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', textDecoration: 'none', color: 'inherit' }} title={isVi ? "Vào Không Gian Cá Nhân" : "Open Personal Space"}>
+          {session.picture ? (
+            <img src={session.picture} alt="" style={{ width: 18, height: 18, borderRadius: '50%' }} />
+          ) : (
+            <span style={{ color: 'var(--celestial-gold)' }}>●</span>
+          )}
+          <span style={{ color: 'var(--moon-ivory)', fontFamily: 'var(--font-mono)' }}>{session.name}</span>
+        </Link>
         <button
           type="button"
           onClick={handleLogout}
@@ -228,7 +231,6 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange }) => {
       </div>
     );
   }
-
   return (
     <>
       {/* Standard Header Login Button */}
