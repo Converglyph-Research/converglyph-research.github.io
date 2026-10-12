@@ -4,6 +4,19 @@ All component updates, bug fixes, and design system refinements are tracked belo
 
 ---
 
+### [2026-10-12 17:57:21 UTC] [FEAT] Expandable Convergence Matrix methodology card with KaTeX formula and data source breakdown
+
+- **Context & Problem:**
+  Added an expandable accordion card into TimeSeriesConvergenceView explaining the exact ingested data sources across 4 traditions (Western Big Three & transits, Tu Vi 12 palaces & Dai Han, BaZi Day Master & Dai Van, Numerology Pinnacles) and rendering the formal mathematical Convergence Rate formula C = 1 - (sigma / sigma_max) via KaTeX.
+- **Files Modified:**
+  - `components/report/TimeSeriesConvergenceView.tsx`
+- **Verification Evidence:**
+  npx tsc --noEmit passed cleanly with 0 errors. Verified KaTeX formula markup.
+- **Engineering Insights & Risk Mitigation:**
+  Exposing the explicit mathematical formula and data inputs directly underneath the convergence wave ensures scientific transparency without overwhelming casual readers.
+
+---
+
 ### [2026-10-12 17:55:23 UTC] [FEAT] LaTeX bracket delimiters, quick load previous run button, and convergence rate formula transparency
 
 - **Context & Problem:**
