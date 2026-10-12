@@ -37,9 +37,11 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange }) => {
     setSession(s);
     if (onSessionChange) onSessionChange(s);
 
-    // Initialize Google Identity Services
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '10928374619-aetheria.apps.googleusercontent.com';
-    if (typeof window !== 'undefined' && window.google?.accounts?.id) {
+    // Initialize Google Identity Services only when a valid client ID is provided in environment
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
+    const isValidClientId = clientId && !clientId.includes('aetheria.apps.googleusercontent.com');
+    
+    if (isValidClientId && typeof window !== 'undefined' && window.google?.accounts?.id) {
       setHasGoogleClient(true);
       window.google.accounts.id.initialize({
         client_id: clientId,
@@ -57,8 +59,7 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange }) => {
               setSession(newSession);
               setIsModalOpen(false);
               if (onSessionChange) onSessionChange(newSession);
-              // Navigate to personal explore page upon login
-              window.location.href = '/explore';
+              window.location.assign('/explore/');
             }
           }
         }
@@ -66,9 +67,11 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange }) => {
     }
   }, []);
 
-  // When modal opens, render the official Google button if SDK is loaded
+  // When modal opens and valid client ID is present, render the official Google button
   React.useEffect(() => {
-    if (isModalOpen && window.google?.accounts?.id && googleBtnContainerRef.current) {
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
+    const isValidClientId = clientId && !clientId.includes('aetheria.apps.googleusercontent.com');
+    if (isModalOpen && isValidClientId && window.google?.accounts?.id && googleBtnContainerRef.current) {
       window.google.accounts.id.renderButton(googleBtnContainerRef.current, {
         theme: 'filled_black',
         size: 'large',
@@ -84,20 +87,21 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange }) => {
 
   const handleManualEmailLogin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const emailInput = (e.currentTarget.querySelector('input[type="email"]') as HTMLInputElement)?.value || customEmail;
-    if (!emailInput) return;
-    const nameInput = (e.currentTarget.querySelector('input[type="text"]') as HTMLInputElement)?.value || customName;
+    const form = e.currentTarget;
+    const emailVal = (form.elements.namedItem('email') as HTMLInputElement)?.value || customEmail;
+    const nameVal = (form.elements.namedItem('name') as HTMLInputElement)?.value || customName;
+    if (!emailVal) return;
     
     const userSession: UserSession = {
-      name: nameInput.trim() || emailInput.split('@')[0],
-      email: emailInput.trim(),
+      name: nameVal.trim() || emailVal.split('@')[0],
+      email: emailVal.trim(),
       sub: `user-${Date.now()}`
     };
     saveUserSession(userSession);
     setSession(userSession);
     setIsModalOpen(false);
     if (onSessionChange) onSessionChange(userSession);
-    window.location.href = '/explore/';
+    window.location.assign('/explore/');
   };
   const handleLogout = () => {
     clearUserSession();
@@ -169,22 +173,24 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange }) => {
               {dict.auth_modal_desc}
             </p>
 
-            {/* Official Google Identity Button Container */}
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
-              <div ref={googleBtnContainerRef} />
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-              <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>OR GOOGLE EMAIL</span>
-              <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
-            </div>
-
+{hasGoogleClient && (
+  <>
+    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+      <div ref={googleBtnContainerRef} />
+    </div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+      <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
+      <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>OR GOOGLE EMAIL</span>
+      <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
+    </div>
+  </>
+)}
             <form onSubmit={handleManualEmailLogin}>
               <div className="form-group">
-                <label className="form-label">Full Name / Display Name</label>
+                <label className="form-label">{dict.auth_name_label || 'Họ và tên / Display Name'}</label>
                 <input
                   type="text"
+                  name="name"
                   className="text-input"
                   placeholder="e.g. Marie Curie"
                   value={customName}
@@ -193,9 +199,10 @@ export const GoogleAuth: React.FC<GoogleAuthProps> = ({ onSessionChange }) => {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Google Account Email</label>
+                <label className="form-label">{dict.auth_email_label || 'Email Tài Khoản Google / Email'}</label>
                 <input
                   type="email"
+                  name="email"
                   className="text-input"
                   placeholder="name@gmail.com"
                   value={customEmail}
