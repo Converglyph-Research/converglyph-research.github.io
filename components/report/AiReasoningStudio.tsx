@@ -7,8 +7,17 @@ import katex from 'katex';
 export function formatAiMarkdown(md: string): string {
   if (!md) return '';
   let html = md;
+  // Sanitize unicode thin spaces often emitted by LLMs in LaTeX formulas
+  html = html.replace(/[\u202F\u00A0\u200B]/g, ' ');
 
-  // 1. Render Display Math ($$...$$) with KaTeX before HTML character escaping
+  // 1. Render Display Math: both $$...$$ and \[...\] with KaTeX before HTML character escaping
+  html = html.replace(/\\\[([\s\S]+?)\\\]/g, (_, equation) => {
+    try {
+      return `<div class="katex-display-wrapper" style="overflow-x: auto; margin: 1rem 0; padding: 0.5rem 0; text-align: center;">${katex.renderToString(equation.trim(), { displayMode: true, throwOnError: false })}</div>`;
+    } catch {
+      return `<div style="text-align: center; font-family: var(--font-mono); margin: 0.75rem 0; color: var(--celestial-gold);">${equation}</div>`;
+    }
+  });
   html = html.replace(/\$\$([\s\S]+?)\$\$/g, (_, equation) => {
     try {
       return `<div class="katex-display-wrapper" style="overflow-x: auto; margin: 1rem 0; padding: 0.5rem 0; text-align: center;">${katex.renderToString(equation.trim(), { displayMode: true, throwOnError: false })}</div>`;
@@ -17,7 +26,14 @@ export function formatAiMarkdown(md: string): string {
     }
   });
 
-  // 2. Render Inline Math ($...$) with KaTeX
+  // 2. Render Inline Math: both \(...\) and $...$ with KaTeX
+  html = html.replace(/\\\(([\s\S]+?)\\\)/g, (_, equation) => {
+    try {
+      return katex.renderToString(equation.trim(), { displayMode: false, throwOnError: false });
+    } catch {
+      return `<code style="font-family: var(--font-mono); color: var(--celestial-gold);">${equation}</code>`;
+    }
+  });
   html = html.replace(/\$([^\$\n]+?)\$/g, (_, equation) => {
     try {
       return katex.renderToString(equation.trim(), { displayMode: false, throwOnError: false });
@@ -25,7 +41,6 @@ export function formatAiMarkdown(md: string): string {
       return `<code style="font-family: var(--font-mono); color: var(--celestial-gold);">${equation}</code>`;
     }
   });
-
   // Protect intentional line breaks
   html = html.replace(/<br\s*\/?>/gi, '___AIMD_BR___');
 

@@ -433,6 +433,17 @@ REQUIREMENTS:
                     </optgroup>
                   )}
                 </select>
+                {savedDbProfiles.length > 0 && (
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    onClick={() => handleSelectProfile(`db-${savedDbProfiles[0].id}`)}
+                    style={{ fontSize: '0.78rem', padding: '0.45rem 0.85rem', color: 'var(--celestial-gold)', borderColor: 'rgba(217,193,143,0.4)' }}
+                    title={locale === 'vi' ? 'Tải nhanh bản ghi gần nhất đã lưu trong CSDL' : 'Quickly load most recent saved run'}
+                  >
+                    📥 {locale === 'vi' ? `Tải bản ghi gần nhất (${savedDbProfiles[0].name})` : `Load Latest Run (${savedDbProfiles[0].name})`}
+                  </button>
+                )}
               </div>
 
               <div className="report-tradition-toggles">

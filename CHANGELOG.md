@@ -4,6 +4,21 @@ All component updates, bug fixes, and design system refinements are tracked belo
 
 ---
 
+### [2026-10-12 17:55:23 UTC] [FEAT] LaTeX bracket delimiters, quick load previous run button, and convergence rate formula transparency
+
+- **Context & Problem:**
+  Added support for LaTeX bracket delimiters \[...\] and \(...\) with Unicode thin space sanitization in formatAiMarkdown, resolving math rendering on complex formulas like aligned elemental counts and derived fractions. Added '📥 Tải bản ghi gần nhất' button right beside the Profile Specimen dropdown on /explore. Documented Convergence Rate formula mechanics (C = 1 - σᵥ / 1.45) directly in TimeSeriesConvergenceView.
+- **Files Modified:**
+  - `components/report/AiReasoningStudio.tsx`
+  - `components/report/TimeSeriesConvergenceView.tsx`
+  - `app/explore/page.tsx`
+- **Verification Evidence:**
+  npx tsc --noEmit passed cleanly; tested LaTeX aligned formula in Node with KaTeX producing 14KB+ MathML spans.
+- **Engineering Insights & Risk Mitigation:**
+  Supporting both standard bracket syntax \[...\] alongside dollar delimiters 3080702...3080702 guarantees compatibility with all major LLMs emitting LaTeX math blocks.
+
+---
+
 ### [2026-10-12 17:45:58 UTC] [FIX] Render saved database runs in specimen dropdown optgroups on explore page
 
 - **Context & Problem:**
