@@ -7,6 +7,7 @@ import { PrototypeNotice } from '@/components/layout/PrototypeNotice';
 import { RadarChart } from '@/components/report/RadarChart';
 import { ThemeCards } from '@/components/report/ThemeCards';
 import { ProfileForm } from '@/components/report/ProfileForm';
+import { TimeSeriesConvergenceView } from '@/components/report/TimeSeriesConvergenceView';
 import { AiReasoningStudio } from '@/components/report/AiReasoningStudio';
 import { BENCHMARK_PROFILES, deriveDomainScores } from '@/lib/profile';
 import { BirthProfile, LifeMapResult } from '@/lib/types';
@@ -279,10 +280,27 @@ REQUIREMENTS:
 4. ACTIONABLE STRATEGIC SYNTHESIS.`;
       userPrompt = `${contextData}\nKhía cạnh trọng tâm: ${aspect}.\nGiai đoạn thời gian: ${timeHorizon}.\nHãy thực hiện luận giải hợp nhất đa hệ thống với các bảng Markdown và công thức LaTeX hoàn chỉnh.`;
     }
+    const allowed = method === 'unified'
+      ? Object.entries(traditions).filter(([_, active]) => active).map(([k]) => {
+          if (k === 'w') return 'western';
+          if (k === 't') return 'tuvi';
+          if (k === 'b') return 'bazi';
+          return 'numerology';
+        })
+      : [method];
+
     await streamAiReasoning({
       model: model || "openai/gpt-oss-120b",
       systemPrompt: sysPrompt,
       userPrompt,
+      tier: "pro",
+      allowedTraditions: allowed,
+      context: {
+        tuvi: synthesisData?.tuvi,
+        western: synthesisData?.astro,
+        bazi: (profileResult as any)?.rawData?.bazi,
+        numerology: (profileResult as any)?.rawData?.numerology
+      },
       onChunk: (chunk) => setAiThinkingText(prev => prev + chunk),
       onError: (err) => setAiThinkingText(`AI Inference Error: ${err}`),
       onDone: () => setIsAiLoading(false)
@@ -541,6 +559,12 @@ REQUIREMENTS:
             )}
           </div>
 
+          {/* Dedicated Chronological Time-Series & Cross-System Comparative Section */}
+          <TimeSeriesConvergenceView
+            isVietnamese={locale === 'vi'}
+            subjectName={profileResult.profile.name}
+            birthYear={profileResult.profile.year}
+          />
           {/* Modern AI Reasoning Studio Placed AFTER Calculation Laboratory */}
           <AiReasoningStudio
             isVietnamese={locale === 'vi'}

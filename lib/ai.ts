@@ -7,15 +7,20 @@ export interface AiStreamOptions {
   model?: string;
   systemPrompt: string;
   userPrompt: string;
+  tier?: string;
+  allowedTraditions?: string[];
+  context?: Record<string, any>;
   onChunk: (text: string) => void;
   onError?: (err: string) => void;
   onDone?: () => void;
 }
-
 export async function streamAiReasoning({
   model = "openai/gpt-oss-120b",
   systemPrompt,
   userPrompt,
+  tier = "pro",
+  allowedTraditions = ["western", "tuvi", "bazi", "numerology"],
+  context = {},
   onChunk,
   onError,
   onDone
@@ -33,10 +38,12 @@ export async function streamAiReasoning({
       body: JSON.stringify({
         model,
         systemPrompt,
-        userPrompt
+        userPrompt,
+        tier,
+        allowed_traditions: allowedTraditions,
+        context
       })
     });
-
     if (!resp.ok) {
       throw new Error(`AI Gateway responded with HTTP ${resp.status}`);
     }

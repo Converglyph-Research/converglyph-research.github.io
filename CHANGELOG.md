@@ -4,6 +4,22 @@ All component updates, bug fixes, and design system refinements are tracked belo
 
 ---
 
+### [2026-10-12 17:04:44 UTC] [FEAT] Interactive Time-Series Convergence Stepper and strict default-to-free tier authorization
+
+- **Context & Problem:**
+  Added TimeSeriesConvergenceView component providing an interactive developmental epoch stepper (Foundational 0-25, Peak Zenith 26-40, Mastery 41-55, Harvest 56+) side-by-side comparing Western Astrodienst planetary cycles against Eastern Tu Vi/BaZi luck decades with consensus percentages. Tightened server.py tier authorization so unauthenticated calls strictly resolve to Free tier, blocking unauthorized AI inferences with HTTP 403 unless valid pro credentials or headers are present.
+- **Files Modified:**
+  - `components/report/TimeSeriesConvergenceView.tsx`
+  - `app/explore/page.tsx`
+  - `lib/ai.ts`
+  - `server.py`
+- **Verification Evidence:**
+  npm run build passed generating all 15 static HTML routes without error. Curl confirmed unauthenticated requests default to free tier and require upgrade.
+- **Engineering Insights & Risk Mitigation:**
+  Visual stepper timelines offer immediate intuitive understanding of life phases before users engage LLM inference, reducing prompt ambiguity and making cross-tradition comparisons concrete.
+
+---
+
 ### [2026-10-12 16:52:29 UTC] [FEAT] KaTeX mathematical rendering ($ and 3080702), Time-Series life horizon selector, and cross-tradition data integration
 
 - **Context & Problem:**
