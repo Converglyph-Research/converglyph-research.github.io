@@ -4,6 +4,17 @@ All component updates, bug fixes, and design system refinements are tracked belo
 
 ---
 
+### [2026-10-12 17:10:29 UTC] [DOCS] Created frontend ARCHITECTURAL_MEMORY.md for UI/UX contracts and time-series rules
+
+- **Context & Problem:**
+  Documented UI/UX guidelines: Convergence Matrix top-level dedicated placement, minimum >= 2 active methods threshold, authentic method-specific temporal mapping, and KaTeX math processing order.
+- **Files Modified:**
+  - `ARCHITECTURAL_MEMORY.md`
+- **Verification Evidence:**
+  File created and verified
+
+---
+
 ### [2026-10-12 17:04:44 UTC] [FEAT] Interactive Time-Series Convergence Stepper and strict default-to-free tier authorization
 
 - **Context & Problem:**
