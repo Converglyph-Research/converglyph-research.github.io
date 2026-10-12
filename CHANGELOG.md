@@ -4,6 +4,20 @@ All component updates, bug fixes, and design system refinements are tracked belo
 
 ---
 
+### [2026-10-12 16:15:03 UTC] [FEAT] Modernized ProfileForm UI/UX with native date/time pickers and Geolocation API
+
+- **Context & Problem:**
+  Replaced 3 separate numeric text inputs for YYYY/MM/DD with native HTML5 input[type='date'] and input[type='time'], eliminating validation friction. Implemented navigator.geolocation browser API ('Use Current Location' / 'Lấy vị trí hiện tại') auto-populating sub-arcsecond latitude and longitude coordinates. Extended Vietnamese and international city lookup dictionary.
+- **Files Modified:**
+  - `components/report/ProfileForm.tsx`
+  - `lib/validation.ts`
+- **Verification Evidence:**
+  npm run build passed generating all 15 static HTML pages without syntax or type errors.
+- **Engineering Insights & Risk Mitigation:**
+  Native HTML5 date and time pickers provide superior mobile ergonomics and built-in calendar widgets across iOS, Android, and desktop browsers, preventing invalid day-of-month entries before submission.
+
+---
+
 ### [2026-10-12 16:10:16 UTC] [FEAT] Dedicated Personal Research Space (/personal), direct profile management, and GSI removeChild elimination
 
 - **Context & Problem:**

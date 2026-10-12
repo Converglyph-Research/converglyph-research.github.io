@@ -18,50 +18,85 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   isVietnamese
 }) => {
   const [name, setName] = React.useState('');
-  const [year, setYear] = React.useState('');
-  const [month, setMonth] = React.useState('');
-  const [day, setDay] = React.useState('');
+  // Use HTML5 date input format YYYY-MM-DD
+  const [birthDate, setBirthDate] = React.useState('1990-01-01');
   const [isTimeUnknown, setIsTimeUnknown] = React.useState(false);
-  const [hour, setHour] = React.useState('');
-  const [minute, setMinute] = React.useState('');
+  const [birthTime, setBirthTime] = React.useState('12:00');
   const [locationName, setLocationName] = React.useState('');
-  const [latitude, setLatitude] = React.useState('');
-  const [longitude, setLongitude] = React.useState('');
+  const [latitude, setLatitude] = React.useState('21.03');
+  const [longitude, setLongitude] = React.useState('105.85');
   const [useLmt, setUseLmt] = React.useState(false);
+  const [geoLoading, setGeoLoading] = React.useState(false);
+  const [geoNotice, setGeoNotice] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
 
   const loadDemoEinstein = () => {
     setName('Albert Einstein');
-    setYear('1879');
-    setMonth('3');
-    setDay('14');
+    setBirthDate('1879-03-14');
     setIsTimeUnknown(false);
-    setHour('11');
-    setMinute('30');
+    setBirthTime('11:30');
     setLocationName('Ulm, Germany');
     setLatitude('48.40');
     setLongitude('9.99');
     setUseLmt(true);
     setErrorMsg(null);
+    setGeoNotice(null);
   };
 
-  const handleCityBlur = () => {
-    if (!locationName) return;
-    const resolved = resolveCityCoordinates(locationName);
+  const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setLocationName(val);
+    const resolved = resolveCityCoordinates(val);
     if (resolved) {
-      if (!latitude) setLatitude(resolved.lat.toFixed(2));
-      if (!longitude) setLongitude(resolved.lon.toFixed(2));
+      setLatitude(resolved.lat.toFixed(4));
+      setLongitude(resolved.lon.toFixed(4));
+      setGeoNotice(isVietnamese ? `✓ Tự động định vị: ${resolved.lat.toFixed(2)}°N, ${resolved.lon.toFixed(2)}°E` : `✓ Matched city: ${resolved.lat.toFixed(2)}°, ${resolved.lon.toFixed(2)}°`);
     }
+  };
+
+  // Browser Geolocation API for Current Location
+  const handleGetCurrentLocation = () => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setGeoNotice(isVietnamese ? 'Trình duyệt không hỗ trợ Geolocation.' : 'Geolocation is not supported by your browser.');
+      return;
+    }
+    setGeoLoading(true);
+    setGeoNotice(isVietnamese ? 'Đang lấy vị trí GPS...' : 'Requesting GPS coordinates...');
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        setLatitude(lat.toFixed(4));
+        setLongitude(lon.toFixed(4));
+        if (!locationName) {
+          setLocationName(isVietnamese ? 'Vị trí hiện tại của bạn' : 'Current Device Location');
+        }
+        setGeoLoading(false);
+        setGeoNotice(isVietnamese ? `✓ Đã lấy vị trí GPS: ${lat.toFixed(2)}°, ${lon.toFixed(2)}°` : `✓ GPS location acquired: ${lat.toFixed(2)}°, ${lon.toFixed(2)}°`);
+      },
+      (err) => {
+        setGeoLoading(false);
+        setGeoNotice(isVietnamese ? `Không thể lấy vị trí: ${err.message}` : `Location request denied: ${err.message}`);
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
-    const y = parseInt(year);
-    const m = parseInt(month);
-    const d = parseInt(day);
+    // Parse date YYYY-MM-DD
+    const dateParts = birthDate.split('-');
+    if (dateParts.length !== 3) {
+      setErrorMsg(isVietnamese ? 'Vui lòng chọn ngày sinh hợp lệ.' : 'Please enter a valid birth date.');
+      return;
+    }
+    const y = parseInt(dateParts[0], 10);
+    const m = parseInt(dateParts[1], 10);
+    const d = parseInt(dateParts[2], 10);
 
     if (!isValidGregorianDate(y, m, d)) {
       setErrorMsg(isVietnamese ? 'Ngày tháng sinh Dương lịch không hợp lệ.' : 'Please enter a valid Gregorian birth date.');
@@ -71,14 +106,15 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     let h: number | null = null;
     let min: number | null = null;
     if (!isTimeUnknown) {
-      if (hour === '' || minute === '') {
-        setErrorMsg(isVietnamese ? 'Vui lòng nhập giờ sinh hoặc chọn "Tôi không rõ giờ sinh".' : 'Please provide birth time or select "I don\'t know my birth time".');
+      const timeParts = birthTime.split(':');
+      if (timeParts.length < 2) {
+        setErrorMsg(isVietnamese ? 'Vui lòng chọn giờ sinh hoặc chọn "Không rõ giờ sinh".' : 'Please provide birth time or select "I don\'t know my birth time".');
         return;
       }
-      h = parseInt(hour);
-      min = parseInt(minute);
+      h = parseInt(timeParts[0], 10);
+      min = parseInt(timeParts[1], 10);
       if (isNaN(h) || isNaN(min) || h < 0 || h > 23 || min < 0 || min > 59) {
-        setErrorMsg(isVietnamese ? 'Giờ sinh phải từ 0-23, phút từ 0-59.' : 'Birth hour must be 0-23, minute 0-59.');
+        setErrorMsg(isVietnamese ? 'Giờ sinh không hợp lệ.' : 'Invalid birth time.');
         return;
       }
     }
@@ -94,14 +130,14 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     }
 
     if (!isValidCoordinates(lat, lon)) {
-      setErrorMsg(isVietnamese ? 'Vui lòng nhập tọa độ (Vĩ độ & Kinh độ) hợp lệ.' : 'Please enter valid latitude and longitude coordinates.');
+      setErrorMsg(isVietnamese ? 'Vui lòng nhập tọa độ hợp lệ (Vĩ độ -90 đến 90, Kinh độ -180 đến 180).' : 'Please enter valid coordinates (Latitude -90 to 90, Longitude -180 to 180).');
       return;
     }
 
     setLoading(true);
     try {
       await onSubmitProfile({
-        name: name.trim() || 'Anonymous Subject',
+        name: name.trim() || (isVietnamese ? 'Hồ Sơ Cá Nhân' : 'Subject Profile'),
         year: y,
         month: m,
         day: d,
@@ -110,7 +146,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
         isTimeUnknown,
         latitude: lat,
         longitude: lon,
-        locationName: locationName.trim() || 'Specified Coordinates',
+        locationName: locationName.trim() || (isVietnamese ? 'Tọa độ xác định' : 'Specified Coordinates'),
         useLmt
       });
       onClose();
@@ -122,26 +158,31 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     }
   };
 
+  if (!isOpen) return null;
+
   return (
     <>
       <div
-        className={`drawer-backdrop ${isOpen ? 'active' : ''}`}
+        className="drawer-backdrop active"
         onClick={onClose}
         aria-hidden="true"
       />
       <dialog
-        className={`calc-drawer ${isOpen ? 'open' : ''}`}
+        open
+        className="calc-drawer open"
         id="calc-drawer"
+        style={{ width: '560px' }}
         aria-labelledby="calc-drawer-title"
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1rem' }}>
           <div>
-            <h3 id="calc-drawer-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.5rem', fontWeight: 500 }}>
-              {isVietnamese ? 'Lập Bản Đồ Cuộc Đời' : 'Calculate Life Map'}
+            <h3 id="calc-drawer-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.6rem', color: 'var(--moon-ivory)' }}>
+              {isVietnamese ? 'Lập Lá Số & Bản Đồ Cuộc Đời' : 'Calculate Life Map & Charts'}
             </h3>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginTop: '0.25rem' }}>
-              Deterministic Lunisolar & Planetary Calculation
-            </div>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginTop: '0.2rem' }}>
+              Deterministic Swiss Ephemeris & Ho Ngoc Duc Lunisolar Engine
+            </p>
           </div>
           <button
             className="close-drawer-btn"
@@ -149,21 +190,22 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Close Profile Drawer"
-            style={{ background: 'none', border: 'none', fontSize: '1.6rem', color: 'var(--moon-ivory)', cursor: 'pointer' }}
+            style={{ background: 'none', border: 'none', fontSize: '1.75rem', color: 'var(--text-dim)', cursor: 'pointer', lineHeight: 1 }}
           >
             &times;
           </button>
         </div>
 
+        {/* Load Preset Demo Button */}
         <div style={{ marginBottom: '1.5rem' }}>
           <button
             type="button"
             className="btn btn-outline"
             id="btn-load-demo-profile"
             onClick={loadDemoEinstein}
-            style={{ width: '100%', fontSize: '0.8rem' }}
+            style={{ width: '100%', fontSize: '0.8rem', padding: '0.55rem' }}
           >
-            📋 {isVietnamese ? 'Tải dữ liệu mẫu Albert Einstein' : 'Load Albert Einstein Demo Parameters'}
+            📋 {isVietnamese ? 'Nạp thông số mẫu: Albert Einstein (1879)' : 'Load Benchmark Preset: Albert Einstein (1879)'}
           </button>
         </div>
 
@@ -174,9 +216,10 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
         )}
 
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
+          {/* 1. Name */}
+          <div className="form-group" style={{ marginBottom: '1.25rem' }}>
             <label className="form-label" htmlFor="form-name">
-              {isVietnamese ? 'Họ và Tên' : 'Subject Name'}
+              {isVietnamese ? '1. Họ và Tên / Định Danh' : '1. Subject Name'}
             </label>
             <input
               type="text"
@@ -184,62 +227,39 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
               className="text-input"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Marie Curie"
+              placeholder={isVietnamese ? 'Ví dụ: Nguyễn Văn A hoặc Marie Curie' : 'e.g. Marie Curie or Albert Einstein'}
               required
             />
           </div>
 
-          <div className="form-group">
-            <span className="form-label">{isVietnamese ? 'Ngày Sinh (Dương Lịch)' : 'Birth Date (Gregorian)'}</span>
-            <div className="form-row">
-              <div>
-                <input
-                  type="number"
-                  id="form-year"
-                  className="text-input"
-                  placeholder="YYYY"
-                  min="1400"
-                  max="2026"
-                  value={year}
-                  onChange={(e) => setYear(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <input
-                  type="number"
-                  id="form-month"
-                  className="text-input"
-                  placeholder="MM (1-12)"
-                  min="1"
-                  max="12"
-                  value={month}
-                  onChange={(e) => setMonth(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <input
-                  type="number"
-                  id="form-day"
-                  className="text-input"
-                  placeholder="DD (1-31)"
-                  min="1"
-                  max="31"
-                  value={day}
-                  onChange={(e) => setDay(e.target.value)}
-                  required
-                />
-              </div>
+          {/* 2. Birth Date */}
+          <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+            <label className="form-label" htmlFor="form-birth-date">
+              {isVietnamese ? '2. Ngày Tháng Năm Sinh (Dương Lịch)' : '2. Gregorian Birth Date'}
+            </label>
+            <input
+              type="date"
+              id="form-birth-date"
+              className="text-input"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              min="1400-01-01"
+              max="2030-12-31"
+              required
+              style={{ fontSize: '0.95rem', padding: '0.65rem 1rem' }}
+            />
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '0.3rem' }}>
+              {isVietnamese ? 'Định dạng chuẩn: Năm-Tháng-Ngày (YYYY-MM-DD)' : 'Standard ISO format: YYYY-MM-DD'}
             </div>
           </div>
 
-          <div className="form-group">
+          {/* 3. Birth Time */}
+          <div className="form-group" style={{ marginBottom: '1.25rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-              <span className="form-label" style={{ marginBottom: 0 }}>
-                {isVietnamese ? 'Giờ Sinh' : 'Birth Time'}
-              </span>
-              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
+              <label className="form-label" htmlFor="form-birth-time" style={{ marginBottom: 0 }}>
+                {isVietnamese ? '3. Giờ Sinh' : '3. Birth Time'}
+              </label>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
                   id="form-time-unknown"
@@ -250,93 +270,102 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
               </label>
             </div>
 
-            {!isTimeUnknown && (
-              <div className="form-row-2">
-                <div>
-                  <input
-                    type="number"
-                    id="form-hour"
-                    className="text-input"
-                    placeholder="Hour (0-23)"
-                    min="0"
-                    max="23"
-                    value={hour}
-                    onChange={(e) => setHour(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <input
-                    type="number"
-                    id="form-min"
-                    className="text-input"
-                    placeholder="Minute (0-59)"
-                    min="0"
-                    max="59"
-                    value={minute}
-                    onChange={(e) => setMinute(e.target.value)}
-                  />
-                </div>
-              </div>
-            )}
-
-            {isTimeUnknown && (
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.35rem' }}>
+            {!isTimeUnknown ? (
+              <input
+                type="time"
+                id="form-birth-time"
+                className="text-input"
+                value={birthTime}
+                onChange={(e) => setBirthTime(e.target.value)}
+                required
+                style={{ fontSize: '0.95rem', padding: '0.65rem 1rem' }}
+              />
+            ) : (
+              <div style={{ background: 'rgba(0,0,0,0.25)', borderLeft: '3px solid var(--celestial-gold)', padding: '0.65rem 0.85rem', borderRadius: '6px', fontSize: '0.75rem', color: 'var(--moon-ivory)' }}>
                 {isVietnamese
-                  ? 'Ghi chú: Khi không có giờ sinh, Cung Mọc (Ascendant) và trụ giờ Bát Tự sẽ được đánh dấu không xác định.'
-                  : 'Note: Without birth time, house cusps (Ascendant/Midheaven) will be marked uncertain.'}
+                  ? 'Ghi chú: Khi không rõ giờ sinh, hệ thống mặc định 12:00 trưa; các cung nhà (Cung Mọc / Ascendant) và trụ giờ Bát Tự sẽ được đánh dấu ước tính.'
+                  : 'Note: Without exact birth time, 12:00 noon is used; Ascendant/Midheaven and hour pillars will be flagged as estimated.'}
               </div>
             )}
           </div>
 
-          <div className="form-group">
-            <label className="form-label" htmlFor="form-loc">
-              {isVietnamese ? 'Nơi Sinh (Thành Phố / Quốc Gia)' : 'City / Birthplace'}
-            </label>
+          {/* 4. Birth Location with Geo-Location button */}
+          <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+              <label className="form-label" htmlFor="form-loc" style={{ marginBottom: 0 }}>
+                {isVietnamese ? '4. Nơi Sinh & Tọa Độ Địa Lý' : '4. Birthplace & Geographical Coordinates'}
+              </label>
+              <button
+                type="button"
+                onClick={handleGetCurrentLocation}
+                disabled={geoLoading}
+                className="btn btn-outline"
+                style={{ fontSize: '0.72rem', padding: '0.2rem 0.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                title={isVietnamese ? 'Sử dụng GPS thiết bị hiện tại' : 'Acquire GPS coordinates from browser'}
+              >
+                <span>📍</span>
+                <span>{geoLoading ? (isVietnamese ? 'Đang lấy GPS...' : 'Locating...') : (isVietnamese ? 'Lấy vị trí hiện tại' : 'Use Current Location')}</span>
+              </button>
+            </div>
+
             <input
               type="text"
               id="form-loc"
               className="text-input"
-              placeholder="e.g. London, UK"
+              placeholder={isVietnamese ? 'Nhập thành phố (VD: Hà Nội, Hồ Chí Minh, Paris, Tokyo...)' : 'Type city name (e.g. Paris, London, Tokyo, New York...)'}
               value={locationName}
-              onChange={(e) => setLocationName(e.target.value)}
-              onBlur={handleCityBlur}
-              style={{ marginBottom: '0.75rem' }}
+              onChange={handleCityChange}
+              style={{ marginBottom: '0.6rem' }}
             />
+
             <div className="form-row-2">
               <div>
+                <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', display: 'block', marginBottom: '0.2rem', fontFamily: 'var(--font-mono)' }}>
+                  {isVietnamese ? 'Vĩ độ (Latitude)' : 'Latitude (°N)'}
+                </label>
                 <input
                   type="number"
-                  step="0.01"
+                  step="0.0001"
                   id="form-lat"
                   className="text-input"
-                  placeholder="Latitude (e.g. 51.50)"
+                  placeholder="e.g. 21.0285"
                   value={latitude}
                   onChange={(e) => setLatitude(e.target.value)}
                   required
                 />
               </div>
               <div>
+                <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', display: 'block', marginBottom: '0.2rem', fontFamily: 'var(--font-mono)' }}>
+                  {isVietnamese ? 'Kinh độ (Longitude)' : 'Longitude (°E)'}
+                </label>
                 <input
                   type="number"
-                  step="0.01"
+                  step="0.0001"
                   id="form-lon"
                   className="text-input"
-                  placeholder="Longitude (e.g. -0.12)"
+                  placeholder="e.g. 105.8542"
                   value={longitude}
                   onChange={(e) => setLongitude(e.target.value)}
                   required
                 />
               </div>
             </div>
-            <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
+
+            {geoNotice && (
+              <div style={{ fontSize: '0.75rem', color: 'var(--celestial-gold)', marginTop: '0.45rem', fontFamily: 'var(--font-mono)' }}>
+                {geoNotice}
+              </div>
+            )}
+
+            <div style={{ marginTop: '0.65rem' }}>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
                   id="form-use-lmt"
                   checked={useLmt}
                   onChange={(e) => setUseLmt(e.target.checked)}
                 />
-                {isVietnamese ? 'Áp dụng Giờ Mặt Trời Trung Bình Lịch Sử (LMT)' : 'Historical Local Mean Time (LMT)'}
+                {isVietnamese ? 'Áp dụng Giờ Mặt Trời Trung Bình Lịch Sử (LMT cho người sinh trước 1920)' : 'Historical Local Mean Time (LMT for births before 1920)'}
               </label>
             </div>
           </div>
@@ -345,11 +374,11 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
             type="submit"
             className="btn btn-primary"
             disabled={loading}
-            style={{ width: '100%', marginTop: '1.25rem' }}
+            style={{ width: '100%', padding: '0.8rem', fontSize: '0.95rem' }}
           >
             {loading
-              ? (isVietnamese ? 'Đang tính toán các hệ thống...' : 'Computing Multi-System Engines...')
-              : (isVietnamese ? 'Lập Bản Đồ Cuộc Đời' : 'Generate Editorial Life Map')}
+              ? (isVietnamese ? '⏳ Đang tính toán 4 hệ thống...' : '⏳ Computing 4 Analytical Canons...')
+              : (isVietnamese ? '✦ Tạo Bản Đồ Cuộc Đời Ngay' : '✦ Generate Editorial Life Map')}
           </button>
         </form>
       </dialog>
